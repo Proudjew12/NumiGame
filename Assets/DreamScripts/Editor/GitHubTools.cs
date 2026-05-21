@@ -80,8 +80,32 @@ namespace DreamScripts.EditorTools
             var push = RunGit("push -u origin " + Quote(branch));
             if (!push.Success)
             {
-                ShowGitFailure("GitHub Upload failed", "Git could not push to GitHub.", push);
-                return;
+                if (IsAuthenticationFailure(push))
+                {
+                    ShowAuthenticationHelp("GitHub Upload blocked", push);
+                    return;
+                }
+
+                if (IsNonFastForwardFailure(push))
+                {
+                    push = ReplaceRemoteBranch(branch, push);
+                    if (!push.Success)
+                    {
+                        if (IsAuthenticationFailure(push))
+                        {
+                            ShowAuthenticationHelp("GitHub Upload blocked", push);
+                            return;
+                        }
+
+                        ShowGitFailure("GitHub Upload failed", "Git could not push to GitHub.", push);
+                        return;
+                    }
+                }
+                else
+                {
+                    ShowGitFailure("GitHub Upload failed", "Git could not push to GitHub.", push);
+                    return;
+                }
             }
 
             var head = RunGit("rev-parse --short HEAD").Output.Trim();
@@ -339,6 +363,31 @@ namespace DreamScripts.EditorTools
             return false;
         }
 
+        private static GitResult ReplaceRemoteBranch(string branch, GitResult originalPushFailure)
+        {
+            var replace = EditorUtility.DisplayDialog(
+                "GitHub Upload needs sync",
+                "GitHub already has commits that are not in this local project.\n\n" +
+                "This usually happens when the GitHub repository was created with an initial README/license commit.\n\n" +
+                "Upload can replace the GitHub branch with this Unity project using --force-with-lease. This keeps the local project as the source of truth and refuses to overwrite GitHub if it changed after the last fetch.\n\n" +
+                "Original Git message:\n" + Clip(originalPushFailure.Combined),
+                "Replace GitHub Branch",
+                "Cancel");
+
+            if (!replace)
+            {
+                return originalPushFailure;
+            }
+
+            var fetch = RunGit("fetch origin " + Quote(branch));
+            if (!fetch.Success)
+            {
+                return fetch;
+            }
+
+            return RunGit("push --force-with-lease -u origin " + Quote(branch));
+        }
+
         private static string GetCurrentBranch()
         {
             var result = RunGit("rev-parse --abbrev-ref HEAD");
@@ -374,6 +423,7 @@ namespace DreamScripts.EditorTools
             };
 
             AddLocalBinToPath(startInfo);
+            startInfo.EnvironmentVariables["GIT_TERMINAL_PROMPT"] = "0";
 
             using (var process = new Process())
             {
@@ -436,6 +486,47 @@ namespace DreamScripts.EditorTools
         private static string EmptyFallback(string value, string fallback)
         {
             return string.IsNullOrWhiteSpace(value) ? fallback : value;
+        }
+
+        private static bool IsAuthenticationFailure(GitResult result)
+        {
+            var combined = result.Combined;
+            return combined.IndexOf("could not read Username", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   combined.IndexOf("Authentication failed", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   combined.IndexOf("Permission denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   combined.IndexOf("Repository not found", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsNonFastForwardFailure(GitResult result)
+        {
+            var combined = result.Combined;
+            return combined.IndexOf("non-fast-forward", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   combined.IndexOf("fetch first", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   combined.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static void ShowAuthenticationHelp(string title, GitResult result)
+        {
+            Show(
+                title,
+                "GitHub rejected the upload because this computer is not logged in for Git HTTPS pushes.\n\n" +
+                "Run this once in a terminal:\n\n" +
+                "cd " + ProjectRoot + "\n" +
+                "gh auth login --hostname github.com --git-protocol https --scopes repo --web\n" +
+                "gh auth setup-git\n\n" +
+                "Then press DreamScripts/GitHub/Upload again.\n\n" +
+                "Git said:\n" + result.Combined);
+        }
+
+        private static string Clip(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            const int maxLength = 1200;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength) + "\n... clipped ...";
         }
 
         private static string ToGitHubBrowserUrl(string remoteUrl)
