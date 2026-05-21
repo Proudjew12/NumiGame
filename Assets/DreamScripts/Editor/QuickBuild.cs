@@ -15,22 +15,8 @@ namespace DreamScripts.EditorTools
 
         static QuickBuild()
         {
-            DreamScriptRegistry.Register("Quick Build/Windows", BuildWindows, priority: 40, isEnabled: ValidateBuildWindows);
-            DreamScriptRegistry.Register("Quick Build/Linux", BuildLinux, priority: 41, isEnabled: ValidateBuildLinux);
-            DreamScriptRegistry.Register("Quick Build/macOS", BuildMac, priority: 42, isEnabled: ValidateBuildMac);
-            DreamScriptRegistry.Register("Quick Build/Android", BuildAndroid, priority: 43, isEnabled: ValidateBuildAndroid);
-        }
-
-        [MenuItem(RootPath + "/Windows", false, RootMenuPriorityBase)]
-        private static void BuildWindows()
-        {
-            BuildForTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64, "Windows", ".exe");
-        }
-
-        [MenuItem(RootPath + "/Windows", true, RootMenuPriorityBase)]
-        private static bool ValidateBuildWindows()
-        {
-            return CanBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);
+            DreamScriptRegistry.Register("Quick Build/Linux", BuildLinux, priority: 40, isEnabled: ValidateBuildLinux);
+            DreamScriptRegistry.Register("Quick Build/macOS", BuildMac, priority: 41, isEnabled: ValidateBuildMac);
         }
 
         [MenuItem(RootPath + "/Linux", false, RootMenuPriorityBase + 1)]
@@ -55,18 +41,6 @@ namespace DreamScripts.EditorTools
         private static bool ValidateBuildMac()
         {
             return CanBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneOSX);
-        }
-
-        [MenuItem(RootPath + "/Android", false, RootMenuPriorityBase + 3)]
-        private static void BuildAndroid()
-        {
-            BuildForTarget(BuildTargetGroup.Android, BuildTarget.Android, "Android", ".apk");
-        }
-
-        [MenuItem(RootPath + "/Android", true, RootMenuPriorityBase + 3)]
-        private static bool ValidateBuildAndroid()
-        {
-            return CanBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
         }
 
         private static bool CanBuildTarget(BuildTargetGroup group, BuildTarget target)

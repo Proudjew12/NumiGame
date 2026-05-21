@@ -95,7 +95,6 @@ namespace DreamScripts.EditorTools
             var systems = EnsureChild(root.transform, "Systems");
 
             MoveIfExists(scene, "Main Camera", systems.transform);
-            MoveIfExists(scene, "StageOneManager", systems.transform);
             MoveIfExists(scene, "Player", gameplay.transform);
 
             OrganizeEnvironment(environment.transform);
@@ -111,7 +110,7 @@ namespace DreamScripts.EditorTools
             SetSiblingOrder(environment.transform, "Background", "Parallax", "Trees", "StageShell", "Floor", "FrontGround");
             SetSiblingOrder(gameplay.transform, "Player", "RespawnPoints");
             SetSiblingOrder(puzzles.transform, "PuzzleOne", "PuzzleTwo", "PuzzleThree", "PuzzleFour");
-            SetSiblingOrder(systems.transform, "Main Camera", "StageOneManager");
+            SetSiblingOrder(systems.transform, "Main Camera");
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -256,7 +255,6 @@ namespace DreamScripts.EditorTools
             var systems = EnsureSeparator(root, "Systems");
 
             MoveIfExists(scene, "Main Camera", systems);
-            MoveIfExists(scene, "StageOneManager", systems);
             MoveIfExists(scene, "Player", playerGroup);
             MoveIfExists(scene, "World Ground Pieces", ground);
             MoveIfExists(scene, "Respawn Points", systems);
@@ -304,7 +302,7 @@ namespace DreamScripts.EditorTools
                 SeparatorName("Systems"));
             SetSiblingOrder(environment, "Back", "Play", "Front", "Decorative World Art", "Story Props");
             SetSiblingOrder(decorativeWorldArt, "Trees", "Grass Details", "Rocks");
-            SetSiblingOrder(systems, "Main Camera", "StageOneManager", "Respawn Points");
+            SetSiblingOrder(systems, "Main Camera", "Respawn Points");
         }
 
         private static Transform EnsureSeparator(Transform root, string label)

@@ -19,9 +19,6 @@ namespace NumiDream.StageOne
         [Space(4)]
         [InspectorName("Snap On Start")]
         [SerializeField] private bool snapToTargetOnStart = true;
-        [Space(4)]
-        [InspectorName("Screen Shake")]
-        [SerializeField] private StageScreenShake screenShake;
 
         [Space(10)]
         [Header("--------- Follow ---------")]
@@ -103,11 +100,6 @@ namespace NumiDream.StageOne
         private void Awake()
         {
             ResolvePlayerTarget();
-
-            if (screenShake == null)
-            {
-                screenShake = GetComponent<StageScreenShake>();
-            }
         }
 
         private void Start()
@@ -134,11 +126,6 @@ namespace NumiDream.StageOne
             var next = smoothTime <= 0f
                 ? wanted
                 : Vector3.SmoothDamp(transform.position, wanted, ref _velocity, smoothTime);
-
-            if (screenShake != null)
-            {
-                next += (Vector3)screenShake.CurrentOffset;
-            }
 
             transform.position = next;
         }

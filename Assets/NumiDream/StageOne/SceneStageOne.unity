@@ -6356,7 +6356,6 @@ GameObject:
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   - component: {fileID: 330585549}
-  - component: {fileID: 330585550}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -6498,7 +6497,6 @@ MonoBehaviour:
   autoFindPlayerTarget: 1
   playerTag: Player
   snapToTargetOnStart: 1
-  screenShake: {fileID: 0}
   offset: {x: 0, y: 2}
   zPosition: -20
   smoothTime: 0.28
@@ -6511,24 +6509,6 @@ MonoBehaviour:
   useBounds: 1
   minBounds: {x: -19.74, y: 0}
   maxBounds: {x: 1000, y: 12}
---- !u!114 &330585550
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf2d42a6e1c384daf9cd182284e05d73, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NumiDream.StageOne.StageScreenShake
-  enableRuntimeShake: 0
-  shakeActive: 1
-  intensity: 0.012
-  frequency: 1.7
-  verticalWeight: 0.65
-  fadeOutSpeed: 2
 --- !u!1 &333629975
 GameObject:
   m_ObjectHideFlags: 0
