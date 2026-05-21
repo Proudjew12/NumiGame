@@ -165,40 +165,37 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
+            var remoteHeadHash = remoteHead.Output.Trim();
+            var localOnlyCommits = RunGit("log --oneline " + Quote(remoteRef) + "..HEAD").Output.Trim();
             var incomingCommits = RunGit("log --oneline HEAD.." + Quote(remoteRef)).Output.Trim();
             var incomingFiles = RunGit("diff --name-status HEAD.." + Quote(remoteRef)).Output.Trim();
+            var headDiffersFromRemote = !string.Equals(oldHead, remoteHeadHash, StringComparison.Ordinal);
 
-            if (string.IsNullOrWhiteSpace(incomingCommits) && string.IsNullOrWhiteSpace(incomingFiles) && !createdSafetyCommit)
+            if (!headDiffersFromRemote && !createdSafetyCommit)
             {
                 Show("GitHub Import complete", "Already up to date.\n\nBranch: " + branch);
                 return;
             }
 
             var backupBranch = string.Empty;
-            GitResult importResult;
-
-            if (createdSafetyCommit)
+            if (createdSafetyCommit || headDiffersFromRemote)
             {
                 backupBranch = CreateImportBackupBranch(branch);
                 if (string.IsNullOrWhiteSpace(backupBranch))
                 {
                     return;
                 }
-
-                importResult = RunGit("reset --hard " + Quote(remoteRef));
-            }
-            else
-            {
-                importResult = RunGit("pull --rebase origin " + Quote(branch));
             }
 
+            var importResult = RunGit("reset --hard " + Quote(remoteRef));
             if (!importResult.Success)
             {
                 ShowGitFailure(
                     "GitHub Import stopped",
-                    createdSafetyCommit
-                        ? "Git could not restore the project from GitHub. Your safety commit is still available on backup branch:\n" + backupBranch
-                        : "Git could not import cleanly. Your project was not overwritten. Resolve the Git conflict, then run Import again.",
+                    "Git could not restore the project from GitHub." +
+                    (string.IsNullOrWhiteSpace(backupBranch)
+                        ? string.Empty
+                        : "\n\nYour local state is still available on backup branch:\n" + backupBranch),
                     importResult);
                 return;
             }
@@ -213,6 +210,11 @@ namespace DreamScripts.EditorTools
                 "Branch: " + branch + "\n\n" +
                 "Commits imported:\n" + EmptyFallback(incomingCommits, "No commit list available.") + "\n\n" +
                 "Files updated:\n" + EmptyFallback(appliedFiles, incomingFiles);
+
+            if (!string.IsNullOrWhiteSpace(localOnlyCommits))
+            {
+                message += "\n\nLocal commits moved to backup:\n" + localOnlyCommits;
+            }
 
             if (!string.IsNullOrWhiteSpace(backupBranch))
             {
