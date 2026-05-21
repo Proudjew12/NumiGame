@@ -13,6 +13,7 @@ Unity editor toolbar tools live here.
 - `Editor/QuickBuild.cs`: adds quick build menu actions for Linux and macOS.
 - `Editor/CleanupTools.cs`: adds `DreamScripts/Cleanup/Clean Temp Logs`.
 - `Editor/VersionControlEasy.cs`: adds `DreamScripts/Backup/CreateBackup` and `.../RestoreBackup`.
+- `Editor/GitHubTools.cs`: adds `DreamScripts/GitHub/SetRepo`, `Upload`, `Import`, and `EnterRepo`.
 - `Editor/RefreshFallback.cs`: forces `AssetDatabase.Refresh()` on startup/focus as a fallback when file watching fails.
 
 ## How to add your next tool

@@ -128,6 +128,7 @@ The custom `DreamScripts` Unity toolbar includes:
 - `Backup/RestoreBackup`
 - `GitHub/Upload`
 - `GitHub/Import`
+- `GitHub/SetRepo`
 - `GitHub/EnterRepo`
 - `Quick Build/Linux`
 - `Quick Build/macOS`
@@ -152,6 +153,12 @@ Build outputs are written under:
 ```
 
 Both folders are local workflow output and should not be committed.
+
+Before using GitHub Upload, Import, or EnterRepo, the local repo needs an `origin` remote. Create the repository on GitHub, copy its repository URL, then press:
+
+```text
+DreamScripts > GitHub > SetRepo
+```
 
 ## Opening The Project
 

@@ -19,7 +19,8 @@ namespace DreamScripts.EditorTools
         {
             DreamScriptRegistry.Register("GitHub/Upload", Upload, priority: 22);
             DreamScriptRegistry.Register("GitHub/Import", Import, priority: 23);
-            DreamScriptRegistry.Register("GitHub/EnterRepo", EnterRepo, priority: 24);
+            DreamScriptRegistry.Register("GitHub/SetRepo", SetRepo, priority: 24);
+            DreamScriptRegistry.Register("GitHub/EnterRepo", EnterRepo, priority: 25);
         }
 
         [MenuItem(RootPath + "/Upload", false, RootMenuPriorityBase)]
@@ -173,10 +174,67 @@ namespace DreamScripts.EditorTools
             Show("GitHub Import complete", message);
         }
 
-        [MenuItem(RootPath + "/EnterRepo", false, RootMenuPriorityBase + 2)]
+        [MenuItem(RootPath + "/SetRepo", false, RootMenuPriorityBase + 2)]
+        private static void SetRepo()
+        {
+            if (!EnsureGitRepository())
+            {
+                return;
+            }
+
+            var clipboard = (EditorGUIUtility.systemCopyBuffer ?? string.Empty).Trim();
+            var repoUrl = ToGitHubBrowserUrl(clipboard);
+            if (string.IsNullOrWhiteSpace(repoUrl))
+            {
+                Show(
+                    "GitHub SetRepo",
+                    "Copy your GitHub repository URL first, then press SetRepo again.\n\n" +
+                    "Accepted examples:\n" +
+                    "https://github.com/user/repo.git\n" +
+                    "https://github.com/user/repo\n" +
+                    "git@github.com:user/repo.git");
+                return;
+            }
+
+            var currentRemote = RunGit("remote get-url origin");
+            if (currentRemote.Success && !string.IsNullOrWhiteSpace(currentRemote.Output))
+            {
+                var replace = EditorUtility.DisplayDialog(
+                    "GitHub SetRepo",
+                    "Replace the current origin remote?\n\n" +
+                    "Current:\n" + currentRemote.Output.Trim() + "\n\n" +
+                    "New:\n" + clipboard,
+                    "Replace",
+                    "Cancel");
+
+                if (!replace)
+                {
+                    return;
+                }
+            }
+
+            var command = currentRemote.Success && !string.IsNullOrWhiteSpace(currentRemote.Output)
+                ? "remote set-url origin " + Quote(clipboard)
+                : "remote add origin " + Quote(clipboard);
+
+            var setRemote = RunGit(command);
+            if (!setRemote.Success)
+            {
+                ShowGitFailure("GitHub SetRepo failed", "Git could not save the origin remote.", setRemote);
+                return;
+            }
+
+            Show(
+                "GitHub SetRepo complete",
+                "Origin remote saved:\n" + clipboard + "\n\n" +
+                "Website URL:\n" + repoUrl + "\n\n" +
+                "You can now use GitHub/EnterRepo and GitHub/Upload.");
+        }
+
+        [MenuItem(RootPath + "/EnterRepo", false, RootMenuPriorityBase + 3)]
         private static void EnterRepo()
         {
-            if (!EnsureGitRepository() || !EnsureOriginRemote())
+            if (!EnsureGitRepository())
             {
                 return;
             }
@@ -184,7 +242,15 @@ namespace DreamScripts.EditorTools
             var remote = RunGit("remote get-url origin");
             if (!remote.Success)
             {
-                ShowGitFailure("GitHub EnterRepo failed", "Git could not read the origin remote.", remote);
+                var createUrl = "https://github.com/new?name=" + Uri.EscapeDataString(new DirectoryInfo(ProjectRoot).Name);
+                Application.OpenURL(createUrl);
+                Show(
+                    "GitHub remote missing",
+                    "No GitHub remote named 'origin' is configured yet.\n\n" +
+                    "I opened GitHub's new repository page.\n\n" +
+                    "After creating the repo, copy its GitHub URL and press:\n" +
+                    "DreamScripts/GitHub/SetRepo\n\n" +
+                    "Then press EnterRepo again.");
                 return;
             }
 
@@ -267,10 +333,9 @@ namespace DreamScripts.EditorTools
             Show(
                 "GitHub remote missing",
                 "No GitHub remote named 'origin' is configured yet.\n\n" +
-                "Add one from the terminal first:\n\n" +
-                "git remote add origin <your-github-repo-url>\n" +
-                "git push -u origin main\n\n" +
-                "After that, DreamScripts/GitHub/Upload and Import will work.");
+                "Create the GitHub repository, copy its repository URL, then press:\n\n" +
+                "DreamScripts/GitHub/SetRepo\n\n" +
+                "After that, DreamScripts/GitHub/Upload, Import, and EnterRepo will work.");
             return false;
         }
 
