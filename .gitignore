@@ -12,6 +12,10 @@
 /Assets/AssetStoreTools/
 /Assets/_Recovery/
 /Assets/Screenshots/
+# Unity Performance Test Runner generated files
+/Assets/Resources.meta
+/Assets/Resources/PerformanceTestRun*.json
+/Assets/Resources/PerformanceTestRun*.json.meta
 **/Assets/**/Temp/
 **/Assets/**/Temp.meta
 **/Assets/**/Temp/**
