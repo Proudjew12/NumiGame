@@ -144,7 +144,7 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
-            if (!CreateSafetyCommitIfNeeded())
+            if (!CreateSafetyCommitIfNeeded(out var createdSafetyCommit))
             {
                 return;
             }
@@ -168,19 +168,38 @@ namespace DreamScripts.EditorTools
             var incomingCommits = RunGit("log --oneline HEAD.." + Quote(remoteRef)).Output.Trim();
             var incomingFiles = RunGit("diff --name-status HEAD.." + Quote(remoteRef)).Output.Trim();
 
-            if (string.IsNullOrWhiteSpace(incomingCommits) && string.IsNullOrWhiteSpace(incomingFiles))
+            if (string.IsNullOrWhiteSpace(incomingCommits) && string.IsNullOrWhiteSpace(incomingFiles) && !createdSafetyCommit)
             {
                 Show("GitHub Import complete", "Already up to date.\n\nBranch: " + branch);
                 return;
             }
 
-            var pull = RunGit("pull --rebase origin " + Quote(branch));
-            if (!pull.Success)
+            var backupBranch = string.Empty;
+            GitResult importResult;
+
+            if (createdSafetyCommit)
+            {
+                backupBranch = CreateImportBackupBranch(branch);
+                if (string.IsNullOrWhiteSpace(backupBranch))
+                {
+                    return;
+                }
+
+                importResult = RunGit("reset --hard " + Quote(remoteRef));
+            }
+            else
+            {
+                importResult = RunGit("pull --rebase origin " + Quote(branch));
+            }
+
+            if (!importResult.Success)
             {
                 ShowGitFailure(
                     "GitHub Import stopped",
-                    "Git could not import cleanly. Your project was not overwritten. Resolve the Git conflict, then run Import again.",
-                    pull);
+                    createdSafetyCommit
+                        ? "Git could not restore the project from GitHub. Your safety commit is still available on backup branch:\n" + backupBranch
+                        : "Git could not import cleanly. Your project was not overwritten. Resolve the Git conflict, then run Import again.",
+                    importResult);
                 return;
             }
 
@@ -194,6 +213,11 @@ namespace DreamScripts.EditorTools
                 "Branch: " + branch + "\n\n" +
                 "Commits imported:\n" + EmptyFallback(incomingCommits, "No commit list available.") + "\n\n" +
                 "Files updated:\n" + EmptyFallback(appliedFiles, incomingFiles);
+
+            if (!string.IsNullOrWhiteSpace(backupBranch))
+            {
+                message += "\n\nLocal safety backup branch:\n" + backupBranch;
+            }
 
             Show("GitHub Import complete", message);
         }
@@ -291,8 +315,10 @@ namespace DreamScripts.EditorTools
             Show("GitHub EnterRepo", "Opened:\n" + repoUrl);
         }
 
-        private static bool CreateSafetyCommitIfNeeded()
+        private static bool CreateSafetyCommitIfNeeded(out bool createdSafetyCommit)
         {
+            createdSafetyCommit = false;
+
             var status = RunGit("status --porcelain");
             if (!status.Success)
             {
@@ -308,7 +334,7 @@ namespace DreamScripts.EditorTools
             var confirm = EditorUtility.DisplayDialog(
                 "GitHub Import",
                 "You have local changes that are not committed yet.\n\n" +
-                "Import will first create a local safety commit, then pull from GitHub.\n\nContinue?",
+                "Import will first create a local safety commit and backup branch, then restore this branch to GitHub's version.\n\nContinue?",
                 "Create Safety Commit",
                 "Cancel");
 
@@ -332,7 +358,28 @@ namespace DreamScripts.EditorTools
                 return false;
             }
 
+            createdSafetyCommit = true;
             return true;
+        }
+
+        private static string CreateImportBackupBranch(string branch)
+        {
+            var safeBranchName = string.IsNullOrWhiteSpace(branch)
+                ? "branch"
+                : branch.Replace('/', '-').Replace('\\', '-');
+            var backupBranch = "backup/import-" + safeBranchName + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+            var backup = RunGit("branch " + Quote(backupBranch) + " HEAD");
+
+            if (!backup.Success)
+            {
+                ShowGitFailure(
+                    "GitHub Import failed",
+                    "Git could not create a safety backup branch before restoring from GitHub.",
+                    backup);
+                return string.Empty;
+            }
+
+            return backupBranch;
         }
 
         private static bool EnsureGitRepository()
