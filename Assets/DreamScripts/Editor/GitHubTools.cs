@@ -19,6 +19,7 @@ namespace DreamScripts.EditorTools
         {
             DreamScriptRegistry.Register("GitHub/Upload", Upload, priority: 22);
             DreamScriptRegistry.Register("GitHub/Import", Import, priority: 23);
+            DreamScriptRegistry.Register("GitHub/EnterRepo", EnterRepo, priority: 24);
         }
 
         [MenuItem(RootPath + "/Upload", false, RootMenuPriorityBase)]
@@ -170,6 +171,34 @@ namespace DreamScripts.EditorTools
                 "Files updated:\n" + EmptyFallback(appliedFiles, incomingFiles);
 
             Show("GitHub Import complete", message);
+        }
+
+        [MenuItem(RootPath + "/EnterRepo", false, RootMenuPriorityBase + 2)]
+        private static void EnterRepo()
+        {
+            if (!EnsureGitRepository() || !EnsureOriginRemote())
+            {
+                return;
+            }
+
+            var remote = RunGit("remote get-url origin");
+            if (!remote.Success)
+            {
+                ShowGitFailure("GitHub EnterRepo failed", "Git could not read the origin remote.", remote);
+                return;
+            }
+
+            var repoUrl = ToGitHubBrowserUrl(remote.Output.Trim());
+            if (string.IsNullOrWhiteSpace(repoUrl))
+            {
+                Show(
+                    "GitHub EnterRepo blocked",
+                    "The origin remote does not look like a GitHub repository:\n\n" + remote.Output.Trim());
+                return;
+            }
+
+            Application.OpenURL(repoUrl);
+            Show("GitHub EnterRepo", "Opened:\n" + repoUrl);
         }
 
         private static bool CreateSafetyCommitIfNeeded()
@@ -342,6 +371,38 @@ namespace DreamScripts.EditorTools
         private static string EmptyFallback(string value, string fallback)
         {
             return string.IsNullOrWhiteSpace(value) ? fallback : value;
+        }
+
+        private static string ToGitHubBrowserUrl(string remoteUrl)
+        {
+            if (string.IsNullOrWhiteSpace(remoteUrl))
+            {
+                return string.Empty;
+            }
+
+            var url = remoteUrl.Trim();
+            if (url.EndsWith(".git", StringComparison.OrdinalIgnoreCase))
+            {
+                url = url.Substring(0, url.Length - 4);
+            }
+
+            if (url.StartsWith("git@github.com:", StringComparison.OrdinalIgnoreCase))
+            {
+                return "https://github.com/" + url.Substring("git@github.com:".Length);
+            }
+
+            if (url.StartsWith("ssh://git@github.com/", StringComparison.OrdinalIgnoreCase))
+            {
+                return "https://github.com/" + url.Substring("ssh://git@github.com/".Length);
+            }
+
+            if (url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("http://github.com/", StringComparison.OrdinalIgnoreCase))
+            {
+                return url.Replace("http://github.com/", "https://github.com/");
+            }
+
+            return string.Empty;
         }
 
         private static void ShowGitFailure(string title, string context, GitResult result)
