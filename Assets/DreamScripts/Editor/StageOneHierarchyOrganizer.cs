@@ -268,7 +268,7 @@ namespace DreamScripts.EditorTools
             var trees = EnsureChild(decorativeWorldArt, "Trees").transform;
             var rocks = EnsureChild(decorativeWorldArt, "Rocks").transform;
 
-            var fog = MoveAndRenameIfExists(scene, background, "Fog Layers", "AllFoge", "Fog Layers");
+            var fog = MoveAndRenameIfExists(scene, background, "Fog Layers", "AllFog", "Fog Layers");
             RenameSequentialChildren(fog, "FogLayer");
 
             var backgroundProps = MoveAndRenameIfExists(scene, background, "Background Props", "AllBG", "Background Props");
