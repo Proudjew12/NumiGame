@@ -190,9 +190,15 @@ namespace DreamScripts.EditorTools
                 }
             }
 
+            var scenesTemporarilyClosed = OpenTemporarySceneBeforeExternalRestore(openScenePaths);
             var importResult = RunGit("reset --hard " + Quote(remoteRef));
             if (!importResult.Success)
             {
+                if (scenesTemporarilyClosed)
+                {
+                    ReloadOpenScenesFromDisk(openScenePaths, activeScenePath);
+                }
+
                 ShowGitFailure(
                     "GitHub Import stopped",
                     "Git could not restore the project from GitHub." +
@@ -479,6 +485,17 @@ namespace DreamScripts.EditorTools
             }
 
             return paths.ToArray();
+        }
+
+        private static bool OpenTemporarySceneBeforeExternalRestore(string[] scenePaths)
+        {
+            if (scenePaths == null || scenePaths.Length == 0)
+            {
+                return false;
+            }
+
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            return true;
         }
 
         private static int ReloadOpenScenesFromDisk(string[] scenePaths, string activeScenePath)
