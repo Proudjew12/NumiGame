@@ -19,20 +19,18 @@ The repository is source-control ready and should contain the complete Unity sou
 - `Packages/manifest.json` and `Packages/packages-lock.json` - the exact Unity Package Manager dependency list and resolved package versions.
 - `ProjectSettings/` - Unity project settings, build scene list, render pipeline setup, tags/layers, input settings, physics settings, quality settings, and version control settings.
 - `.gitignore` - ignores generated/local Unity folders and machine-specific files.
-- `.gitattributes` - keeps Unity YAML files text/merge-friendly and tracks binary assets with Git LFS.
+- `.gitattributes` - keeps Unity YAML files text/merge-friendly and marks binary assets as binary.
 - `README.md` - this project guide.
 
 Do not commit generated local folders such as `Library/`, `Temp/`, `Logs/`, `Builds/`, `UserSettings/`, `.vscode/`, generated `.csproj` files, or generated solution files. Unity and the IDE recreate those locally.
 
-## Git And LFS
+## Git
 
-Git LFS is required because the project contains PNGs, PDFs, animation/art source files, and other binary media. Before cloning or pulling on a new machine, install Git LFS:
+The project stores its current art and media assets directly in Git, so a normal clone contains the real PNG, GIF, PDF, and other binary files. No Git LFS setup is required for opening the project.
 
 ```bash
-git lfs install
 git clone <repo-url>
 cd NumiGameOriginal
-git lfs pull
 ```
 
 Tracked binary patterns include PNG, JPG, PSD, PSB, PDF, WAV, MP3, MP4, FBX, OBJ, ZIP, and other common media formats through `.gitattributes`.
@@ -162,7 +160,7 @@ DreamScripts > GitHub > SetRepo
 
 ## Opening The Project
 
-1. Clone the repository with Git LFS enabled.
+1. Clone the repository with Git.
 2. Open the repository root in Unity Hub using Unity `6000.3.8f1`.
 3. Let Unity restore packages from `Packages/manifest.json`.
 4. Open `Assets/NumiDream/StageOne/SceneStageOne.unity`.
