@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -131,6 +132,8 @@ namespace DreamScripts.EditorTools
         private static void Import()
         {
             SaveUnityState();
+            var openScenePaths = GetOpenScenePaths();
+            var activeScenePath = EditorSceneManager.GetActiveScene().path;
 
             if (!EnsureGitRepository() || !EnsureOriginRemote())
             {
@@ -201,6 +204,7 @@ namespace DreamScripts.EditorTools
             }
 
             AssetDatabase.Refresh();
+            var reloadedSceneCount = ReloadOpenScenesFromDisk(openScenePaths, activeScenePath);
 
             var newHead = RunGit("rev-parse HEAD").Output.Trim();
             var appliedFiles = RunGit("diff --name-status " + Quote(oldHead) + ".." + Quote(newHead)).Output.Trim();
@@ -219,6 +223,11 @@ namespace DreamScripts.EditorTools
             if (!string.IsNullOrWhiteSpace(backupBranch))
             {
                 message += "\n\nLocal safety backup branch:\n" + backupBranch;
+            }
+
+            if (reloadedSceneCount > 0)
+            {
+                message += "\n\nReloaded open scenes from GitHub: " + reloadedSceneCount;
             }
 
             Show("GitHub Import complete", message);
@@ -453,6 +462,58 @@ namespace DreamScripts.EditorTools
         {
             EditorSceneManager.SaveOpenScenes();
             AssetDatabase.SaveAssets();
+        }
+
+        private static string[] GetOpenScenePaths()
+        {
+            var paths = new List<string>();
+            for (var i = 0; i < EditorSceneManager.sceneCount; i++)
+            {
+                var scene = EditorSceneManager.GetSceneAt(i);
+                if (!scene.isLoaded || string.IsNullOrWhiteSpace(scene.path) || paths.Contains(scene.path))
+                {
+                    continue;
+                }
+
+                paths.Add(scene.path);
+            }
+
+            return paths.ToArray();
+        }
+
+        private static int ReloadOpenScenesFromDisk(string[] scenePaths, string activeScenePath)
+        {
+            if (scenePaths == null || scenePaths.Length == 0)
+            {
+                return 0;
+            }
+
+            var loadedCount = 0;
+            var activeScene = default(UnityEngine.SceneManagement.Scene);
+
+            foreach (var scenePath in scenePaths)
+            {
+                if (string.IsNullOrWhiteSpace(scenePath) || !File.Exists(Path.Combine(ProjectRoot, scenePath)))
+                {
+                    continue;
+                }
+
+                var mode = loadedCount == 0 ? OpenSceneMode.Single : OpenSceneMode.Additive;
+                var scene = EditorSceneManager.OpenScene(scenePath, mode);
+                loadedCount++;
+
+                if (string.Equals(scenePath, activeScenePath, StringComparison.Ordinal))
+                {
+                    activeScene = scene;
+                }
+            }
+
+            if (activeScene.IsValid())
+            {
+                EditorSceneManager.SetActiveScene(activeScene);
+            }
+
+            return loadedCount;
         }
 
         private static GitResult RunGit(string arguments)
