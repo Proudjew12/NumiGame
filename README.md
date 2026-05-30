@@ -137,6 +137,7 @@ The custom `DreamScripts` Unity toolbar includes:
 - `Cleanup/Clean Temp Logs`
 - `Sprite Sheet Preview`
 - `CopyComponent` copy/paste actions
+- `RightClickPlayer` scene/game teleport toggle
 
 The backup tool writes project backups under:
 

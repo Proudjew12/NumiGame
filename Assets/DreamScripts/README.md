@@ -8,7 +8,7 @@ Unity editor toolbar tools live here.
 - `Editor/DreamScriptRegistry.cs`: registry used by toolbar actions.
 - `Editor/DreamDefaultTools.cs`: registers `Reload` and toolbar separators.
 - `Editor/SpriteSheetPreviewer.cs`: adds `DreamScripts/Sprite Sheet Preview` for large sprite-sheet animation previews, frame export, clip creation, and Nomi animator generation.
-- `Editor/CopyPlayComponent.cs`: adds `DreamScripts/CopyComponent/Copy` and `.../Paste` for play-mode component value transfer.
+- `Editor/CopyPlayComponent.cs`: adds `DreamScripts/CopyComponent/Copy`, `.../Paste`, and `DreamScripts/RightClickPlayer` for moving the Player with a right-click.
 - `Editor/AutoSaveTIme.cs`: adds `DreamScripts/AutoSaveTime` actions for `Save Now`, `Status`, `Off`, and `On/2..10 Minutes`.
 - `Editor/QuickBuild.cs`: adds quick build menu actions for Linux and macOS.
 - `Editor/CleanupTools.cs`: adds `DreamScripts/Cleanup/Clean Temp Logs`.

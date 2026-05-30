@@ -3,6 +3,10 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 namespace DreamScripts.EditorTools
 {
     [InitializeOnLoad]
@@ -17,6 +21,10 @@ namespace DreamScripts.EditorTools
         private const string MenuPaste = "DreamScripts/CopyComponent/Paste";
         private const string MenuCopyAll = "DreamScripts/CopyComponent/Copy All From Selected GameObject";
         private const string MenuPasteAll = "DreamScripts/CopyComponent/Paste All To Selected GameObject";
+        private const string MenuRightClickPlayerOn = "DreamScripts/RightClickPlayer/On";
+        private const string MenuRightClickPlayerOff = "DreamScripts/RightClickPlayer/Off";
+        private const string RightClickPlayerEnabledKey = "DreamScripts.CopyComponent.RightClickPlayer.Enabled";
+        private static bool s_gameRightMouseWasDown;
 
         [Serializable]
         private struct ClipboardData
@@ -41,6 +49,10 @@ namespace DreamScripts.EditorTools
             DreamScriptRegistry.Register("CopyComponent/Paste", PasteFromMenu, priority: 91, isEnabled: CanPaste);
             DreamScriptRegistry.Register("CopyComponent/Copy All", CopyAllFromMenu, priority: 92, isEnabled: CanCopyAll);
             DreamScriptRegistry.Register("CopyComponent/Paste All", PasteAllFromMenu, priority: 93, isEnabled: CanPasteAll);
+            DreamScriptRegistry.Register("RightClickPlayer/On", TurnRightClickPlayerOn, priority: 94, isEnabled: () => !IsRightClickPlayerEnabled);
+            DreamScriptRegistry.Register("RightClickPlayer/Off", TurnRightClickPlayerOff, priority: 95, isEnabled: () => IsRightClickPlayerEnabled);
+
+            RefreshRightClickPlayerHooks();
         }
 
         [MenuItem(MenuCopy, false, RootMenuPriorityBase)]
@@ -163,6 +175,34 @@ namespace DreamScripts.EditorTools
             return CanPasteAll();
         }
 
+        [MenuItem(MenuRightClickPlayerOn, false, RootMenuPriorityBase + 4)]
+        private static void TurnRightClickPlayerOn()
+        {
+            IsRightClickPlayerEnabled = true;
+            RefreshRightClickPlayerHooks();
+            ShowInfo("RightClickPlayer is On. Right-click in Scene view, or in Game view during Play Mode, to move Player.");
+        }
+
+        [MenuItem(MenuRightClickPlayerOn, true, RootMenuPriorityBase + 4)]
+        private static bool ValidateTurnRightClickPlayerOn()
+        {
+            return !IsRightClickPlayerEnabled;
+        }
+
+        [MenuItem(MenuRightClickPlayerOff, false, RootMenuPriorityBase + 5)]
+        private static void TurnRightClickPlayerOff()
+        {
+            IsRightClickPlayerEnabled = false;
+            RefreshRightClickPlayerHooks();
+            ShowInfo("RightClickPlayer is Off.");
+        }
+
+        [MenuItem(MenuRightClickPlayerOff, true, RootMenuPriorityBase + 5)]
+        private static bool ValidateTurnRightClickPlayerOff()
+        {
+            return IsRightClickPlayerEnabled;
+        }
+
         [MenuItem("CONTEXT/Component/CopyComponent/Copy")]
         private static void CopyFromContext(MenuCommand command)
         {
@@ -220,6 +260,237 @@ namespace DreamScripts.EditorTools
         private static bool CanPasteAll()
         {
             return TryReadClipboardList(out _) && Selection.activeGameObject != null;
+        }
+
+        private static bool IsRightClickPlayerEnabled
+        {
+            get => EditorPrefs.GetBool(RightClickPlayerEnabledKey, false);
+            set => EditorPrefs.SetBool(RightClickPlayerEnabledKey, value);
+        }
+
+        private static void RefreshRightClickPlayerHooks()
+        {
+            SceneView.duringSceneGui -= HandleRightClickPlayerSceneGui;
+            EditorApplication.update -= HandleRightClickPlayerGameViewUpdate;
+            s_gameRightMouseWasDown = false;
+
+            if (!IsRightClickPlayerEnabled)
+            {
+                return;
+            }
+
+            SceneView.duringSceneGui += HandleRightClickPlayerSceneGui;
+            EditorApplication.update += HandleRightClickPlayerGameViewUpdate;
+        }
+
+        private static void HandleRightClickPlayerSceneGui(SceneView sceneView)
+        {
+            if (!IsRightClickPlayerEnabled || sceneView == null)
+            {
+                return;
+            }
+
+            var evt = Event.current;
+            if (evt == null || evt.type != EventType.MouseDown || evt.button != 1 || evt.alt)
+            {
+                return;
+            }
+
+            var player = FindPlayerTransform();
+            if (player == null)
+            {
+                ShowInfo("RightClickPlayer could not find a Player object.");
+                return;
+            }
+
+            var ray = HandleUtility.GUIPointToWorldRay(evt.mousePosition);
+            if (!TryIntersectPlayerPlane(ray, player.position.z, out var targetPosition))
+            {
+                return;
+            }
+
+            MovePlayerTo(player, targetPosition, "Scene view");
+            evt.Use();
+        }
+
+        private static void HandleRightClickPlayerGameViewUpdate()
+        {
+            if (!IsRightClickPlayerEnabled || !Application.isPlaying || IsMouseOverSceneView() || !IsGameViewInteractionActive())
+            {
+                s_gameRightMouseWasDown = false;
+                return;
+            }
+
+            var rightMouseDown = IsRightMouseDownInGame();
+            var rightMousePressed = rightMouseDown && !s_gameRightMouseWasDown;
+            s_gameRightMouseWasDown = rightMouseDown;
+
+            if (!rightMousePressed)
+            {
+                return;
+            }
+
+            var player = FindPlayerTransform();
+            if (player == null)
+            {
+                ShowInfo("RightClickPlayer could not find a Player object.");
+                return;
+            }
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                camera = UnityEngine.Object.FindFirstObjectByType<Camera>();
+            }
+
+            if (camera == null)
+            {
+                ShowInfo("RightClickPlayer could not find a camera for Game view.");
+                return;
+            }
+
+            var ray = camera.ScreenPointToRay(GetGameMousePosition());
+            if (!TryIntersectPlayerPlane(ray, player.position.z, out var targetPosition))
+            {
+                return;
+            }
+
+            MovePlayerTo(player, targetPosition, "Game view");
+        }
+
+        private static Transform FindPlayerTransform()
+        {
+            GameObject playerObject = null;
+
+            try
+            {
+                playerObject = GameObject.FindGameObjectWithTag("Player");
+            }
+            catch (UnityException)
+            {
+                playerObject = null;
+            }
+
+            if (playerObject == null)
+            {
+                playerObject = GameObject.Find("Player");
+            }
+
+            if (playerObject == null)
+            {
+                return null;
+            }
+
+            var body = playerObject.GetComponent<Rigidbody2D>() ?? playerObject.GetComponentInParent<Rigidbody2D>();
+            return body != null ? body.transform : playerObject.transform;
+        }
+
+        private static bool TryIntersectPlayerPlane(Ray ray, float playerZ, out Vector3 position)
+        {
+            var plane = new Plane(Vector3.forward, new Vector3(0f, 0f, playerZ));
+            if (plane.Raycast(ray, out var distance))
+            {
+                position = ray.GetPoint(distance);
+                position.z = playerZ;
+                return true;
+            }
+
+            position = default;
+            return false;
+        }
+
+        private static void MovePlayerTo(Transform player, Vector3 targetPosition, string source)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            targetPosition.z = player.position.z;
+            Undo.RegisterFullObjectHierarchyUndo(player.gameObject, "Right Click Move Player");
+
+            var body = player.GetComponent<Rigidbody2D>();
+            if (body != null)
+            {
+                body.linearVelocity = Vector2.zero;
+                body.angularVelocity = 0f;
+                body.position = new Vector2(targetPosition.x, targetPosition.y);
+            }
+
+            player.position = targetPosition;
+            Physics2D.SyncTransforms();
+            EditorUtility.SetDirty(player);
+
+            if (player.gameObject.scene.IsValid() && !Application.isPlaying)
+            {
+                EditorSceneManager.MarkSceneDirty(player.gameObject.scene);
+            }
+
+            ShowInfo("Moved Player to " + FormatPosition(targetPosition) + " from " + source + ".");
+        }
+
+        private static bool IsGameViewInteractionActive()
+        {
+            if (IsGameViewWindow(EditorWindow.focusedWindow) || IsGameViewWindow(EditorWindow.mouseOverWindow))
+            {
+                return true;
+            }
+
+            return Application.isFocused;
+        }
+
+        private static bool IsMouseOverSceneView()
+        {
+            return EditorWindow.mouseOverWindow is SceneView;
+        }
+
+        private static bool IsGameViewWindow(EditorWindow window)
+        {
+            return window != null && window.GetType().Name.IndexOf("GameView", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsRightMouseDownInGame()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                return Mouse.current.rightButton.isPressed;
+            }
+#endif
+
+            try
+            {
+                return Input.GetMouseButton(1);
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
+        private static Vector3 GetGameMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                var position = Mouse.current.position.ReadValue();
+                return new Vector3(position.x, position.y, 0f);
+            }
+#endif
+
+            try
+            {
+                return Input.mousePosition;
+            }
+            catch (InvalidOperationException)
+            {
+                return Vector3.zero;
+            }
+        }
+
+        private static string FormatPosition(Vector3 position)
+        {
+            return "(" + position.x.ToString("0.##") + ", " + position.y.ToString("0.##") + ", " + position.z.ToString("0.##") + ")";
         }
 
         private static void ShowCopyPicker(Component[] components)
