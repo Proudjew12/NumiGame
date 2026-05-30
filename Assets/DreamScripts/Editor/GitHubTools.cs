@@ -43,9 +43,9 @@ namespace DreamScripts.EditorTools
             var choices = GetBranchChoices(currentBranch, remoteOnly: false);
             BranchPickerWindow.Open(
                 "GitHub Upload",
-                "Choose the GitHub branch that will receive the current saved project state. Select an existing branch or type a new branch name.",
+                "Choose where to upload the current saved project state.",
                 "Upload",
-                "New or existing GitHub branch",
+                "New GitHub branch name",
                 currentBranch,
                 choices,
                 allowManualBranch: true,
@@ -144,6 +144,7 @@ namespace DreamScripts.EditorTools
                 }
             }
 
+            var localBranchNote = SyncLocalBranchReferenceAfterUpload(targetBranch, currentBranch);
             var head = RunGit("rev-parse --short HEAD").Output.Trim();
             var messageText =
                 "Uploaded to GitHub.\n\n" +
@@ -159,6 +160,11 @@ namespace DreamScripts.EditorTools
             else
             {
                 messageText += "Your branch was pushed with the current committed state.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(localBranchNote))
+            {
+                messageText += "\n\n" + localBranchNote;
             }
 
             Show("GitHub Upload complete", messageText);
@@ -188,12 +194,12 @@ namespace DreamScripts.EditorTools
             var choices = GetBranchChoices(currentBranch, remoteOnly: true);
             BranchPickerWindow.Open(
                 "GitHub Import",
-                "Choose the GitHub branch to import into this local project. Import creates a safety backup first, then restores the current local branch from the selected GitHub branch.",
+                "Choose the GitHub branch to import into this local project. Import creates a safety backup first.",
                 "Import",
                 "GitHub branch name",
                 currentBranch,
                 choices,
-                allowManualBranch: true,
+                allowManualBranch: false,
                 warning: string.Empty,
                 onSelected: ImportFromBranch);
         }
@@ -560,6 +566,48 @@ namespace DreamScripts.EditorTools
             }
 
             return PushToRemoteBranch(targetBranch, currentBranch, forceWithLease: true);
+        }
+
+        private static string SyncLocalBranchReferenceAfterUpload(string targetBranch, string currentBranch)
+        {
+            if (string.Equals(targetBranch, currentBranch, StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            var existedLocal = BranchExistsLocal(targetBranch);
+            var branchCommand = existedLocal
+                ? "branch -f " + Quote(targetBranch) + " HEAD"
+                : "branch " + Quote(targetBranch) + " HEAD";
+            var branch = RunGit(branchCommand);
+            if (!branch.Success)
+            {
+                return "GitHub branch was uploaded, but the local branch list could not be updated:\n" + Clip(branch.Combined);
+            }
+
+            var fetch = RunGit("fetch origin " + Quote("refs/heads/" + targetBranch + ":refs/remotes/origin/" + targetBranch));
+            if (!fetch.Success)
+            {
+                return (existedLocal ? "Updated" : "Created") +
+                       " local branch '" + targetBranch + "', but Git could not refresh its GitHub tracking ref:\n" +
+                       Clip(fetch.Combined);
+            }
+
+            var upstream = RunGit("branch --set-upstream-to=" + Quote("origin/" + targetBranch) + " " + Quote(targetBranch));
+            if (!upstream.Success)
+            {
+                return (existedLocal ? "Updated" : "Created") +
+                       " local branch '" + targetBranch + "', but Git could not attach its upstream:\n" +
+                       Clip(upstream.Combined);
+            }
+
+            return (existedLocal ? "Updated" : "Created") +
+                   " local branch '" + targetBranch + "' and linked it to GitHub.";
+        }
+
+        private static bool BranchExistsLocal(string branch)
+        {
+            return RunGit("show-ref --verify --quiet " + Quote("refs/heads/" + branch)).Success;
         }
 
         private static string GetCurrentBranch()
@@ -1057,6 +1105,7 @@ namespace DreamScripts.EditorTools
             private string _titleText;
             private string _warning;
             private bool _allowManualBranch;
+            private bool _useManualBranch;
             private Vector2 _scroll;
 
             public static void Open(
@@ -1119,10 +1168,38 @@ namespace DreamScripts.EditorTools
                     EditorGUILayout.HelpBox(_warning, MessageType.Warning);
                 }
 
-                DrawSearch();
-                DrawBranchList();
-                DrawManualBranchField();
+                if (_allowManualBranch)
+                {
+                    DrawModeTabs();
+                }
+
+                if (_allowManualBranch && _useManualBranch)
+                {
+                    DrawNewBranchPanel();
+                }
+                else
+                {
+                    DrawSearch();
+                    DrawBranchList();
+                }
+
                 DrawFooter();
+            }
+
+            private void DrawModeTabs()
+            {
+                EditorGUILayout.Space(8);
+                var nextMode = GUILayout.Toolbar(
+                    _useManualBranch ? 1 : 0,
+                    new[] { "Existing Branch", "New Branch" },
+                    GUILayout.Height(30));
+
+                var nextUseManual = nextMode == 1;
+                if (nextUseManual != _useManualBranch)
+                {
+                    _useManualBranch = nextUseManual;
+                    GUI.FocusControl(null);
+                }
             }
 
             private void DrawSearch()
@@ -1182,6 +1259,7 @@ namespace DreamScripts.EditorTools
                 {
                     _selectedBranch = choice.Name;
                     _manualBranch = string.Empty;
+                    _useManualBranch = false;
                 }
 
                 GUI.backgroundColor = previousColor;
@@ -1189,17 +1267,26 @@ namespace DreamScripts.EditorTools
                 EditorGUILayout.EndHorizontal();
             }
 
-            private void DrawManualBranchField()
+            private void DrawNewBranchPanel()
             {
-                if (!_allowManualBranch)
+                EditorGUILayout.Space(8);
+                EditorGUILayout.BeginVertical(GUI.skin.box);
+                EditorGUILayout.LabelField(_manualLabel, EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("Upload will create or update this GitHub branch from the current saved project state.", MessageType.Info);
+
+                GUI.SetNextControlName("DreamScriptsGitHubNewBranch");
+                _manualBranch = EditorGUILayout.TextField(_manualBranch ?? string.Empty, GUILayout.Height(24));
+
+                if (string.IsNullOrWhiteSpace(_manualBranch))
                 {
-                    return;
+                    EditorGUILayout.HelpBox("Example: feature/new-level-art", MessageType.None);
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox("This typed branch is the upload target. The selected branch list is ignored.", MessageType.Info);
                 }
 
-                EditorGUILayout.Space(8);
-                EditorGUILayout.LabelField(_manualLabel, EditorStyles.boldLabel);
-                _manualBranch = EditorGUILayout.TextField(_manualBranch ?? string.Empty);
-                EditorGUILayout.HelpBox("Leave this empty to use the selected branch above. Type a branch name here to use a new or hidden branch.", MessageType.None);
+                EditorGUILayout.EndVertical();
             }
 
             private void DrawFooter()
@@ -1208,7 +1295,8 @@ namespace DreamScripts.EditorTools
                 var canConfirm = TryGetCandidate(out var branch, out var error);
                 if (canConfirm)
                 {
-                    EditorGUILayout.HelpBox("Selected branch: " + branch, MessageType.Info);
+                    var source = _allowManualBranch && _useManualBranch ? "New branch: " : "Selected branch: ";
+                    EditorGUILayout.HelpBox(source + branch, MessageType.Info);
                 }
                 else
                 {
@@ -1224,7 +1312,10 @@ namespace DreamScripts.EditorTools
 
                 using (new EditorGUI.DisabledScope(!canConfirm))
                 {
-                    if (GUILayout.Button(_actionLabel, GUILayout.Width(120), GUILayout.Height(30)))
+                    var buttonLabel = _allowManualBranch && _useManualBranch
+                        ? "Create + " + _actionLabel
+                        : _actionLabel;
+                    if (GUILayout.Button(buttonLabel, GUILayout.Width(140), GUILayout.Height(30)))
                     {
                         Confirm(branch);
                     }
@@ -1246,7 +1337,7 @@ namespace DreamScripts.EditorTools
 
             private bool TryGetCandidate(out string branch, out string error)
             {
-                var raw = string.IsNullOrWhiteSpace(_manualBranch) ? _selectedBranch : _manualBranch;
+                var raw = _allowManualBranch && _useManualBranch ? _manualBranch : _selectedBranch;
                 branch = NormalizeBranchInput(raw);
                 return IsValidBranchName(branch, out error);
             }
