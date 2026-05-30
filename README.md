@@ -158,6 +158,8 @@ Before using GitHub Upload, Import, or EnterRepo, the local repo needs an `origi
 DreamScripts > GitHub > SetRepo
 ```
 
+`GitHub/Upload` asks which GitHub branch should receive the current saved project state. `GitHub/Import` asks which GitHub branch should be restored into the current local branch, using a safety backup first.
+
 ## Opening The Project
 
 1. Clone the repository with Git.
