@@ -9,6 +9,7 @@ TagManager:
   - Background
   - Trigger
   - Interactable
+  - WheelGround
   layers:
   - Default
   - TransparentFX

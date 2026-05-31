@@ -10,8 +10,16 @@ public class WheelRoller : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
-    void FixedUpdate()
-    {
+     private void Update() 
+     {
         rb.AddTorque(-torqueForce);
     }
+
+
+   private void OnTriggerEnter2D(Collider2D other) {
+    if (other.gameObject.tag == "WheelGround") {
+        gameObject.tag = "Ground";
+        gameObject.layer = LayerMask.NameToLayer("Ground");
+    }
+}
 }
