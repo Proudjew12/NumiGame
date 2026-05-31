@@ -8,6 +8,7 @@ TagManager:
   - Ground
   - Background
   - Trigger
+  - Interactable
   layers:
   - Default
   - TransparentFX
@@ -22,7 +23,7 @@ TagManager:
   - Trigger
   - Puzzle
   - Environment
-  - 
+  - Intractble
   - 
   - 
   - 

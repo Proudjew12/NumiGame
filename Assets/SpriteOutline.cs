@@ -2,24 +2,32 @@ using UnityEngine;
 
 public class SpriteOutline : MonoBehaviour
 {
-    public Color outlineColor = Color.red;
-    public float outlineSize = 0.05f;
+    public Color outlineColor = Color.white;
+    public Shader outlineShader;
 
     private SpriteRenderer spriteRenderer;
+    private float currentOutlineSize = 0f;
 
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        CreateOutline();
+        CreateOutline(0f); // hidden by default
     }
 
-    void CreateOutline()
+    public void SetInRange(bool inRange)
     {
+        CreateOutline(inRange ? 0.1f : 0f);
+    }
+
+    void CreateOutline(float size)
+    {
+        currentOutlineSize = size;
+
         foreach (Transform child in transform)
-        {
             if (child.name == "Outline")
                 Destroy(child.gameObject);
-        }
+
+        if (size <= 0f) return; // no outline needed
 
         Vector2[] directions = {
             Vector2.up, Vector2.down,
@@ -34,34 +42,41 @@ public class SpriteOutline : MonoBehaviour
         {
             GameObject outline = new GameObject("Outline");
             outline.transform.parent = transform;
-            outline.transform.localPosition = (Vector3)(dir * outlineSize);
+            outline.transform.localPosition = (Vector3)(dir * size);
             outline.transform.localScale = Vector3.one;
-            outline.transform.localRotation = Quaternion.identity; // ✅ stays aligned with parent rotation
+            outline.transform.localRotation = Quaternion.identity;
 
             SpriteRenderer sr = outline.AddComponent<SpriteRenderer>();
             sr.sprite = spriteRenderer.sprite;
-            sr.color = outlineColor;
             sr.sortingLayerID = spriteRenderer.sortingLayerID;
             sr.sortingOrder = spriteRenderer.sortingOrder - 1;
-            sr.material = spriteRenderer.material;
-            sr.flipX = spriteRenderer.flipX; // ✅ matches parent flip
-            sr.flipY = spriteRenderer.flipY; // ✅ matches parent flip
+            sr.flipX = spriteRenderer.flipX;
+            sr.flipY = spriteRenderer.flipY;
+
+            if (outlineShader != null)
+            {
+                Material mat = new Material(outlineShader);
+                mat.color = outlineColor;
+                sr.material = mat;
+                sr.color = Color.white;
+            }
+            else
+            {
+                sr.color = outlineColor;
+            }
         }
     }
 
     void LateUpdate()
     {
-        // ✅ Sync flip every frame in case it changes at runtime (e.g. character facing direction)
         foreach (Transform child in transform)
         {
-            if (child.name == "Outline")
+            if (child.name != "Outline") continue;
+            SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
+            if (sr != null)
             {
-                SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
-                if (sr != null)
-                {
-                    sr.flipX = spriteRenderer.flipX;
-                    sr.flipY = spriteRenderer.flipY;
-                }
+                sr.flipX = spriteRenderer.flipX;
+                sr.flipY = spriteRenderer.flipY;
             }
         }
     }
@@ -71,6 +86,6 @@ public class SpriteOutline : MonoBehaviour
         if (!Application.isPlaying) return;
         if (spriteRenderer == null)
             spriteRenderer = GetComponent<SpriteRenderer>();
-        CreateOutline();
+        CreateOutline(currentOutlineSize);
     }
 }
