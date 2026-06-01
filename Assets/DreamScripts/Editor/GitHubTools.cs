@@ -27,6 +27,34 @@ namespace DreamScripts.EditorTools
         [MenuItem(RootPath + "/Upload", false, RootMenuPriorityBase)]
         private static void Upload()
         {
+            if (!EnsureGitRepository() || !EnsureOriginRemote())
+            {
+                return;
+            }
+
+            var currentBranch = GetCurrentBranch();
+            if (string.IsNullOrWhiteSpace(currentBranch))
+            {
+                Show("GitHub Upload blocked", "Could not detect the current Git branch.");
+                return;
+            }
+
+            var branchListWarning = RefreshOriginBranchList(blockOnFailure: false);
+            var choices = GetBranchChoices(currentBranch, remoteOnly: false);
+            BranchPickerWindow.Open(
+                "GitHub Upload",
+                "Choose where to upload the current saved project state.",
+                "Upload",
+                "New GitHub branch name",
+                currentBranch,
+                choices,
+                allowManualBranch: true,
+                warning: branchListWarning,
+                onSelected: UploadToBranch);
+        }
+
+        private static void UploadToBranch(string targetBranch)
+        {
             SaveUnityState();
 
             if (!EnsureGitRepository() || !EnsureOriginRemote())
@@ -34,8 +62,15 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
-            var branch = GetCurrentBranch();
-            if (string.IsNullOrWhiteSpace(branch))
+            targetBranch = NormalizeBranchInput(targetBranch);
+            if (!IsValidBranchName(targetBranch, out var branchError))
+            {
+                Show("GitHub Upload blocked", branchError);
+                return;
+            }
+
+            var currentBranch = GetCurrentBranch();
+            if (string.IsNullOrWhiteSpace(currentBranch))
             {
                 Show("GitHub Upload blocked", "Could not detect the current Git branch.");
                 return;
@@ -78,7 +113,7 @@ namespace DreamScripts.EditorTools
                 committed = true;
             }
 
-            var push = RunGit("push -u origin " + Quote(branch));
+            var push = PushToRemoteBranch(targetBranch, currentBranch, forceWithLease: false);
             if (!push.Success)
             {
                 if (IsAuthenticationFailure(push))
@@ -89,7 +124,7 @@ namespace DreamScripts.EditorTools
 
                 if (IsNonFastForwardFailure(push))
                 {
-                    push = ReplaceRemoteBranch(branch, push);
+                    push = ReplaceRemoteBranch(targetBranch, currentBranch, push);
                     if (!push.Success)
                     {
                         if (IsAuthenticationFailure(push))
@@ -109,10 +144,12 @@ namespace DreamScripts.EditorTools
                 }
             }
 
+            var localBranchNote = SyncLocalBranchReferenceAfterUpload(targetBranch, currentBranch);
             var head = RunGit("rev-parse --short HEAD").Output.Trim();
             var messageText =
                 "Uploaded to GitHub.\n\n" +
-                "Branch: " + branch + "\n" +
+                "Local branch: " + currentBranch + "\n" +
+                "GitHub branch: " + targetBranch + "\n" +
                 "Commit: " + head + "\n" +
                 "Auto commit created: " + (committed ? "Yes" : "No changes to commit") + "\n\n";
 
@@ -125,11 +162,49 @@ namespace DreamScripts.EditorTools
                 messageText += "Your branch was pushed with the current committed state.";
             }
 
+            if (!string.IsNullOrWhiteSpace(localBranchNote))
+            {
+                messageText += "\n\n" + localBranchNote;
+            }
+
             Show("GitHub Upload complete", messageText);
         }
 
         [MenuItem(RootPath + "/Import", false, RootMenuPriorityBase + 1)]
         private static void Import()
+        {
+            if (!EnsureGitRepository() || !EnsureOriginRemote())
+            {
+                return;
+            }
+
+            var currentBranch = GetCurrentBranch();
+            if (string.IsNullOrWhiteSpace(currentBranch))
+            {
+                Show("GitHub Import blocked", "Could not detect the current Git branch.");
+                return;
+            }
+
+            var branchListWarning = RefreshOriginBranchList(blockOnFailure: true);
+            if (!string.IsNullOrWhiteSpace(branchListWarning))
+            {
+                return;
+            }
+
+            var choices = GetBranchChoices(currentBranch, remoteOnly: true);
+            BranchPickerWindow.Open(
+                "GitHub Import",
+                "Choose the GitHub branch to import into this local project. Import creates a safety backup first.",
+                "Import",
+                "GitHub branch name",
+                currentBranch,
+                choices,
+                allowManualBranch: false,
+                warning: string.Empty,
+                onSelected: ImportFromBranch);
+        }
+
+        private static void ImportFromBranch(string branch)
         {
             SaveUnityState();
             var openScenePaths = GetOpenScenePaths();
@@ -140,8 +215,15 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
-            var branch = GetCurrentBranch();
-            if (string.IsNullOrWhiteSpace(branch))
+            branch = NormalizeBranchInput(branch);
+            if (!IsValidBranchName(branch, out var branchError))
+            {
+                Show("GitHub Import blocked", branchError);
+                return;
+            }
+
+            var currentBranch = GetCurrentBranch();
+            if (string.IsNullOrWhiteSpace(currentBranch))
             {
                 Show("GitHub Import blocked", "Could not detect the current Git branch.");
                 return;
@@ -176,14 +258,18 @@ namespace DreamScripts.EditorTools
 
             if (!headDiffersFromRemote && !createdSafetyCommit)
             {
-                Show("GitHub Import complete", "Already up to date.\n\nBranch: " + branch);
+                Show(
+                    "GitHub Import complete",
+                    "Already up to date.\n\n" +
+                    "Local branch: " + currentBranch + "\n" +
+                    "GitHub branch: " + branch);
                 return;
             }
 
             var backupBranch = string.Empty;
             if (createdSafetyCommit || headDiffersFromRemote)
             {
-                backupBranch = CreateImportBackupBranch(branch);
+                backupBranch = CreateImportBackupBranch(currentBranch);
                 if (string.IsNullOrWhiteSpace(backupBranch))
                 {
                     return;
@@ -217,7 +303,8 @@ namespace DreamScripts.EditorTools
 
             var message =
                 "Imported from GitHub.\n\n" +
-                "Branch: " + branch + "\n\n" +
+                "Local branch: " + currentBranch + "\n" +
+                "GitHub branch: " + branch + "\n\n" +
                 "Commits imported:\n" + EmptyFallback(incomingCommits, "No commit list available.") + "\n\n" +
                 "Files updated:\n" + EmptyFallback(appliedFiles, incomingFiles);
 
@@ -427,13 +514,42 @@ namespace DreamScripts.EditorTools
             return false;
         }
 
-        private static GitResult ReplaceRemoteBranch(string branch, GitResult originalPushFailure)
+        private static string RefreshOriginBranchList(bool blockOnFailure)
+        {
+            var fetch = RunGit("fetch origin --prune");
+            if (fetch.Success)
+            {
+                return string.Empty;
+            }
+
+            if (blockOnFailure)
+            {
+                ShowGitFailure(
+                    "GitHub Import failed",
+                    "Git could not refresh the GitHub branch list before import.",
+                    fetch);
+                return "blocked";
+            }
+
+            return "Could not refresh the GitHub branch list. Showing locally known branches.\n\n" + Clip(fetch.Combined);
+        }
+
+        private static GitResult PushToRemoteBranch(string targetBranch, string currentBranch, bool forceWithLease)
+        {
+            var upstreamFlag = string.Equals(targetBranch, currentBranch, StringComparison.Ordinal)
+                ? "-u "
+                : string.Empty;
+            var forceFlag = forceWithLease ? "--force-with-lease " : string.Empty;
+            return RunGit("push " + forceFlag + upstreamFlag + "origin " + Quote("HEAD:refs/heads/" + targetBranch));
+        }
+
+        private static GitResult ReplaceRemoteBranch(string targetBranch, string currentBranch, GitResult originalPushFailure)
         {
             var replace = EditorUtility.DisplayDialog(
                 "GitHub Upload needs sync",
                 "GitHub already has commits that are not in this local project.\n\n" +
                 "This usually happens when the GitHub repository was created with an initial README/license commit.\n\n" +
-                "Upload can replace the GitHub branch with this Unity project using --force-with-lease. This keeps the local project as the source of truth and refuses to overwrite GitHub if it changed after the last fetch.\n\n" +
+                "Upload can replace the GitHub branch '" + targetBranch + "' with this Unity project using --force-with-lease. This keeps the local project as the source of truth and refuses to overwrite GitHub if it changed after the last fetch.\n\n" +
                 "Original Git message:\n" + Clip(originalPushFailure.Combined),
                 "Replace GitHub Branch",
                 "Cancel");
@@ -443,13 +559,55 @@ namespace DreamScripts.EditorTools
                 return originalPushFailure;
             }
 
-            var fetch = RunGit("fetch origin " + Quote(branch));
+            var fetch = RunGit("fetch origin " + Quote(targetBranch));
             if (!fetch.Success)
             {
                 return fetch;
             }
 
-            return RunGit("push --force-with-lease -u origin " + Quote(branch));
+            return PushToRemoteBranch(targetBranch, currentBranch, forceWithLease: true);
+        }
+
+        private static string SyncLocalBranchReferenceAfterUpload(string targetBranch, string currentBranch)
+        {
+            if (string.Equals(targetBranch, currentBranch, StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            var existedLocal = BranchExistsLocal(targetBranch);
+            var branchCommand = existedLocal
+                ? "branch -f " + Quote(targetBranch) + " HEAD"
+                : "branch " + Quote(targetBranch) + " HEAD";
+            var branch = RunGit(branchCommand);
+            if (!branch.Success)
+            {
+                return "GitHub branch was uploaded, but the local branch list could not be updated:\n" + Clip(branch.Combined);
+            }
+
+            var fetch = RunGit("fetch origin " + Quote("refs/heads/" + targetBranch + ":refs/remotes/origin/" + targetBranch));
+            if (!fetch.Success)
+            {
+                return (existedLocal ? "Updated" : "Created") +
+                       " local branch '" + targetBranch + "', but Git could not refresh its GitHub tracking ref:\n" +
+                       Clip(fetch.Combined);
+            }
+
+            var upstream = RunGit("branch --set-upstream-to=" + Quote("origin/" + targetBranch) + " " + Quote(targetBranch));
+            if (!upstream.Success)
+            {
+                return (existedLocal ? "Updated" : "Created") +
+                       " local branch '" + targetBranch + "', but Git could not attach its upstream:\n" +
+                       Clip(upstream.Combined);
+            }
+
+            return (existedLocal ? "Updated" : "Created") +
+                   " local branch '" + targetBranch + "' and linked it to GitHub.";
+        }
+
+        private static bool BranchExistsLocal(string branch)
+        {
+            return RunGit("show-ref --verify --quiet " + Quote("refs/heads/" + branch)).Success;
         }
 
         private static string GetCurrentBranch()
@@ -462,6 +620,199 @@ namespace DreamScripts.EditorTools
 
             var branch = result.Output.Trim();
             return branch == "HEAD" ? string.Empty : branch;
+        }
+
+        private static List<BranchChoice> GetBranchChoices(string currentBranch, bool remoteOnly)
+        {
+            var byName = new Dictionary<string, BranchChoice>(StringComparer.Ordinal);
+
+            foreach (var branch in ReadBranchNames("for-each-ref --format=%(refname:short) refs/heads"))
+            {
+                AddBranchChoice(byName, branch, existsLocal: true, existsRemote: false, currentBranch: currentBranch);
+            }
+
+            foreach (var branch in ReadBranchNames("for-each-ref --format=%(refname:short) refs/remotes/origin"))
+            {
+                var normalized = NormalizeRemoteBranchName(branch);
+                AddBranchChoice(byName, normalized, existsLocal: false, existsRemote: true, currentBranch: currentBranch);
+            }
+
+            if (!remoteOnly)
+            {
+                AddBranchChoice(byName, currentBranch, existsLocal: true, existsRemote: false, currentBranch: currentBranch);
+            }
+
+            var choices = new List<BranchChoice>();
+            foreach (var choice in byName.Values)
+            {
+                if (remoteOnly && !choice.ExistsRemote)
+                {
+                    continue;
+                }
+
+                choices.Add(choice);
+            }
+
+            choices.Sort(CompareBranchChoices);
+            return choices;
+        }
+
+        private static List<string> ReadBranchNames(string gitArguments)
+        {
+            var result = RunGit(gitArguments);
+            var branches = new List<string>();
+            if (!result.Success || string.IsNullOrWhiteSpace(result.Output))
+            {
+                return branches;
+            }
+
+            var lines = result.Output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                var branch = line.Trim();
+                if (!string.IsNullOrWhiteSpace(branch))
+                {
+                    branches.Add(branch);
+                }
+            }
+
+            return branches;
+        }
+
+        private static void AddBranchChoice(
+            Dictionary<string, BranchChoice> branches,
+            string branch,
+            bool existsLocal,
+            bool existsRemote,
+            string currentBranch)
+        {
+            branch = NormalizeBranchInput(branch);
+            if (string.IsNullOrWhiteSpace(branch) || string.Equals(branch, "HEAD", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (!branches.TryGetValue(branch, out var choice))
+            {
+                choice = new BranchChoice(branch);
+                branches.Add(branch, choice);
+            }
+
+            choice.ExistsLocal = choice.ExistsLocal || existsLocal;
+            choice.ExistsRemote = choice.ExistsRemote || existsRemote;
+            choice.IsCurrent = string.Equals(branch, currentBranch, StringComparison.Ordinal);
+        }
+
+        private static int CompareBranchChoices(BranchChoice a, BranchChoice b)
+        {
+            if (a.IsCurrent != b.IsCurrent)
+            {
+                return a.IsCurrent ? -1 : 1;
+            }
+
+            if (a.ExistsRemote != b.ExistsRemote)
+            {
+                return a.ExistsRemote ? -1 : 1;
+            }
+
+            return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeRemoteBranchName(string branch)
+        {
+            if (string.IsNullOrWhiteSpace(branch))
+            {
+                return string.Empty;
+            }
+
+            branch = branch.Trim();
+            if (branch.StartsWith("origin/", StringComparison.Ordinal))
+            {
+                branch = branch.Substring("origin/".Length);
+            }
+
+            return branch == "HEAD" ? string.Empty : branch;
+        }
+
+        private static string NormalizeBranchInput(string branch)
+        {
+            if (string.IsNullOrWhiteSpace(branch))
+            {
+                return string.Empty;
+            }
+
+            branch = branch.Trim();
+            const string headsPrefix = "refs/heads/";
+            const string remotePrefix = "refs/remotes/origin/";
+
+            if (branch.StartsWith(remotePrefix, StringComparison.Ordinal))
+            {
+                branch = branch.Substring(remotePrefix.Length);
+            }
+            else if (branch.StartsWith(headsPrefix, StringComparison.Ordinal))
+            {
+                branch = branch.Substring(headsPrefix.Length);
+            }
+            else if (branch.StartsWith("origin/", StringComparison.Ordinal))
+            {
+                branch = branch.Substring("origin/".Length);
+            }
+
+            return branch.Trim();
+        }
+
+        private static bool IsValidBranchName(string branch, out string error)
+        {
+            branch = NormalizeBranchInput(branch);
+            if (string.IsNullOrWhiteSpace(branch))
+            {
+                error = "Choose or type a branch name.";
+                return false;
+            }
+
+            if (string.Equals(branch, "HEAD", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "HEAD is not a branch name. Choose a real branch.";
+                return false;
+            }
+
+            if (branch.StartsWith("-", StringComparison.Ordinal) ||
+                branch.StartsWith("/", StringComparison.Ordinal) ||
+                branch.EndsWith("/", StringComparison.Ordinal) ||
+                branch.EndsWith(".", StringComparison.Ordinal) ||
+                branch.Contains("//") ||
+                branch.Contains("..") ||
+                branch.Contains("@{"))
+            {
+                error = "Branch name is not valid:\n" + branch;
+                return false;
+            }
+
+            foreach (var c in branch)
+            {
+                if (char.IsWhiteSpace(c) || char.IsControl(c) || "~^:?*[\\".IndexOf(c) >= 0)
+                {
+                    error = "Branch name contains a character Git does not allow:\n" + branch;
+                    return false;
+                }
+            }
+
+            var parts = branch.Split('/');
+            foreach (var part in parts)
+            {
+                if (string.IsNullOrWhiteSpace(part) ||
+                    part == "." ||
+                    part == ".." ||
+                    part.StartsWith(".", StringComparison.Ordinal) ||
+                    part.EndsWith(".lock", StringComparison.OrdinalIgnoreCase))
+                {
+                    error = "Branch name is not valid:\n" + branch;
+                    return false;
+                }
+            }
+
+            error = string.Empty;
+            return true;
         }
 
         private static void SaveUnityState()
@@ -703,6 +1054,306 @@ namespace DreamScripts.EditorTools
 
             UnityEngine.Debug.Log("[GitHubTools] " + title + "\n" + message);
             EditorUtility.DisplayDialog(title, clipped, "OK");
+        }
+
+        private sealed class BranchChoice
+        {
+            public BranchChoice(string name)
+            {
+                Name = name;
+            }
+
+            public string Name { get; }
+            public bool ExistsLocal { get; set; }
+            public bool ExistsRemote { get; set; }
+            public bool IsCurrent { get; set; }
+
+            public string StatusLabel
+            {
+                get
+                {
+                    if (IsCurrent && ExistsRemote)
+                    {
+                        return "current + GitHub";
+                    }
+
+                    if (IsCurrent)
+                    {
+                        return "current local";
+                    }
+
+                    if (ExistsLocal && ExistsRemote)
+                    {
+                        return "local + GitHub";
+                    }
+
+                    return ExistsRemote ? "GitHub" : "local only";
+                }
+            }
+        }
+
+        private sealed class BranchPickerWindow : EditorWindow
+        {
+            private readonly List<BranchChoice> _choices = new List<BranchChoice>();
+            private Action<string> _onSelected;
+            private string _actionLabel;
+            private string _description;
+            private string _manualBranch;
+            private string _manualLabel;
+            private string _search;
+            private string _selectedBranch;
+            private string _titleText;
+            private string _warning;
+            private bool _allowManualBranch;
+            private bool _useManualBranch;
+            private Vector2 _scroll;
+
+            public static void Open(
+                string title,
+                string description,
+                string actionLabel,
+                string manualLabel,
+                string defaultBranch,
+                List<BranchChoice> choices,
+                bool allowManualBranch,
+                string warning,
+                Action<string> onSelected)
+            {
+                var window = CreateInstance<BranchPickerWindow>();
+                window.titleContent = new GUIContent(title);
+                window._titleText = title;
+                window._description = description;
+                window._actionLabel = actionLabel;
+                window._manualLabel = manualLabel;
+                window._allowManualBranch = allowManualBranch;
+                window._warning = warning ?? string.Empty;
+                window._onSelected = onSelected;
+
+                if (choices != null)
+                {
+                    window._choices.AddRange(choices);
+                }
+
+                window._selectedBranch = PickDefaultBranch(defaultBranch, window._choices);
+                window.minSize = new Vector2(520, 520);
+                window.ShowUtility();
+                window.Focus();
+            }
+
+            private static string PickDefaultBranch(string defaultBranch, List<BranchChoice> choices)
+            {
+                if (choices != null && choices.Count > 0)
+                {
+                    foreach (var choice in choices)
+                    {
+                        if (string.Equals(choice.Name, defaultBranch, StringComparison.Ordinal))
+                        {
+                            return choice.Name;
+                        }
+                    }
+
+                    return choices[0].Name;
+                }
+
+                return NormalizeBranchInput(defaultBranch);
+            }
+
+            private void OnGUI()
+            {
+                EditorGUILayout.LabelField(_titleText, EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox(_description, MessageType.Info);
+
+                if (!string.IsNullOrWhiteSpace(_warning))
+                {
+                    EditorGUILayout.HelpBox(_warning, MessageType.Warning);
+                }
+
+                if (_allowManualBranch)
+                {
+                    DrawModeTabs();
+                }
+
+                if (_allowManualBranch && _useManualBranch)
+                {
+                    DrawNewBranchPanel();
+                }
+                else
+                {
+                    DrawSearch();
+                    DrawBranchList();
+                }
+
+                DrawFooter();
+            }
+
+            private void DrawModeTabs()
+            {
+                EditorGUILayout.Space(8);
+                var nextMode = GUILayout.Toolbar(
+                    _useManualBranch ? 1 : 0,
+                    new[] { "Existing Branch", "New Branch" },
+                    GUILayout.Height(30));
+
+                var nextUseManual = nextMode == 1;
+                if (nextUseManual != _useManualBranch)
+                {
+                    _useManualBranch = nextUseManual;
+                    GUI.FocusControl(null);
+                }
+            }
+
+            private void DrawSearch()
+            {
+                EditorGUILayout.Space(6);
+                EditorGUILayout.BeginHorizontal();
+                _search = EditorGUILayout.TextField("Search", _search ?? string.Empty);
+                using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(_search)))
+                {
+                    if (GUILayout.Button("Clear", GUILayout.Width(64)))
+                    {
+                        _search = string.Empty;
+                        GUI.FocusControl(null);
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            private void DrawBranchList()
+            {
+                EditorGUILayout.Space(4);
+                EditorGUILayout.LabelField("Branches", EditorStyles.boldLabel);
+
+                var visibleCount = 0;
+                _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.MinHeight(190));
+                foreach (var choice in _choices)
+                {
+                    if (!MatchesSearch(choice))
+                    {
+                        continue;
+                    }
+
+                    visibleCount++;
+                    DrawBranchRow(choice);
+                }
+
+                if (visibleCount == 0)
+                {
+                    EditorGUILayout.HelpBox("No branches match the current search.", MessageType.None);
+                }
+
+                EditorGUILayout.EndScrollView();
+            }
+
+            private void DrawBranchRow(BranchChoice choice)
+            {
+                var selected = string.Equals(_selectedBranch, choice.Name, StringComparison.Ordinal);
+                var previousColor = GUI.backgroundColor;
+                if (selected)
+                {
+                    GUI.backgroundColor = new Color(0.55f, 0.72f, 1f);
+                }
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Toggle(selected, choice.Name, GUI.skin.button, GUILayout.Height(26)))
+                {
+                    _selectedBranch = choice.Name;
+                    _manualBranch = string.Empty;
+                    _useManualBranch = false;
+                }
+
+                GUI.backgroundColor = previousColor;
+                GUILayout.Label(choice.StatusLabel, GUILayout.Width(128));
+                EditorGUILayout.EndHorizontal();
+            }
+
+            private void DrawNewBranchPanel()
+            {
+                EditorGUILayout.Space(8);
+                EditorGUILayout.BeginVertical(GUI.skin.box);
+                EditorGUILayout.LabelField(_manualLabel, EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("Upload will create or update this GitHub branch from the current saved project state.", MessageType.Info);
+
+                GUI.SetNextControlName("DreamScriptsGitHubNewBranch");
+                _manualBranch = EditorGUILayout.TextField(_manualBranch ?? string.Empty, GUILayout.Height(24));
+
+                if (string.IsNullOrWhiteSpace(_manualBranch))
+                {
+                    EditorGUILayout.HelpBox("Example: feature/new-level-art", MessageType.None);
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox("This typed branch is the upload target. The selected branch list is ignored.", MessageType.Info);
+                }
+
+                EditorGUILayout.EndVertical();
+            }
+
+            private void DrawFooter()
+            {
+                EditorGUILayout.Space(8);
+                var canConfirm = TryGetCandidate(out var branch, out var error);
+                if (canConfirm)
+                {
+                    var source = _allowManualBranch && _useManualBranch ? "New branch: " : "Selected branch: ";
+                    EditorGUILayout.HelpBox(source + branch, MessageType.Info);
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(error, MessageType.Warning);
+                }
+
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Cancel", GUILayout.Width(100), GUILayout.Height(30)))
+                {
+                    Close();
+                }
+
+                using (new EditorGUI.DisabledScope(!canConfirm))
+                {
+                    var buttonLabel = _allowManualBranch && _useManualBranch
+                        ? "Create + " + _actionLabel
+                        : _actionLabel;
+                    if (GUILayout.Button(buttonLabel, GUILayout.Width(140), GUILayout.Height(30)))
+                    {
+                        Confirm(branch);
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            private bool MatchesSearch(BranchChoice choice)
+            {
+                if (string.IsNullOrWhiteSpace(_search))
+                {
+                    return true;
+                }
+
+                return choice.Name.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                       choice.StatusLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+
+            private bool TryGetCandidate(out string branch, out string error)
+            {
+                var raw = _allowManualBranch && _useManualBranch ? _manualBranch : _selectedBranch;
+                branch = NormalizeBranchInput(raw);
+                return IsValidBranchName(branch, out error);
+            }
+
+            private void Confirm(string branch)
+            {
+                var onSelected = _onSelected;
+                Close();
+
+                if (onSelected == null)
+                {
+                    return;
+                }
+
+                EditorApplication.delayCall += () => onSelected(branch);
+            }
         }
 
         private readonly struct GitResult

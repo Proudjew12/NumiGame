@@ -137,6 +137,7 @@ The custom `DreamScripts` Unity toolbar includes:
 - `Cleanup/Clean Temp Logs`
 - `Sprite Sheet Preview`
 - `CopyComponent` copy/paste actions
+- `RightClickPlayer` scene/game teleport toggle
 
 The backup tool writes project backups under:
 
@@ -157,6 +158,8 @@ Before using GitHub Upload, Import, or EnterRepo, the local repo needs an `origi
 ```text
 DreamScripts > GitHub > SetRepo
 ```
+
+`GitHub/Upload` asks which GitHub branch should receive the current saved project state. `GitHub/Import` asks which GitHub branch should be restored into the current local branch, using a safety backup first.
 
 ## Opening The Project
 
