@@ -14,12 +14,10 @@ public class InteractableCameraFocus : MonoBehaviour
     [Header("Input")]
     [SerializeField] private InputActionReference interactAction;
 
-    // State
     private bool isFocusingObject = false;
     private Transform playerFollowTarget;
-    private InteractableManipulator currentManipulator; // track focused object
+    private InteractableManipulator currentManipulator;
 
-    // Track which outlines are currently highlighted so we can turn them off
     private readonly HashSet<SpriteOutline> activeOutlines = new();
 
     private void Start()
@@ -45,6 +43,7 @@ public class InteractableCameraFocus : MonoBehaviour
         UpdateOutlines();
     }
 
+    // Single overlap call — updates outlines and caches results for focus use
     private void UpdateOutlines()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRadius, ~0);
@@ -63,16 +62,12 @@ public class InteractableCameraFocus : MonoBehaviour
         }
 
         foreach (var outline in inRangeOutlines)
-        {
             if (!activeOutlines.Contains(outline))
                 outline.SetInRange(true);
-        }
 
         foreach (var outline in activeOutlines)
-        {
             if (!inRangeOutlines.Contains(outline))
                 outline.SetInRange(false);
-        }
 
         activeOutlines.Clear();
         foreach (var o in inRangeOutlines)
@@ -92,12 +87,14 @@ public class InteractableCameraFocus : MonoBehaviour
         GameObject closest = GetClosestInteractable();
         if (closest == null) return;
 
+        InteractableManipulator manipulator = closest.GetComponent<InteractableManipulator>();
+        if (manipulator == null) return;
+
         playerCamera.Follow = closest.transform;
         isFocusingObject = true;
 
-        // Enable gravity on focus
-        currentManipulator = closest.GetComponent<InteractableManipulator>();
-        currentManipulator?.OnFocused();
+        currentManipulator = manipulator;
+        currentManipulator.OnFocused();
     }
 
     private void ReturnCameraToPlayer()
@@ -105,7 +102,6 @@ public class InteractableCameraFocus : MonoBehaviour
         playerCamera.Follow = playerFollowTarget;
         isFocusingObject = false;
 
-        // Disable gravity on release
         currentManipulator?.OnFocusReleased();
         currentManipulator = null;
     }

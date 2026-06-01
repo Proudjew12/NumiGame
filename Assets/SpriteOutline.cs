@@ -6,7 +6,7 @@ public class SpriteOutline : MonoBehaviour
     public Shader outlineShader;
 
     private SpriteRenderer spriteRenderer;
-    private float currentOutlineSize = 0f;
+    public float currentOutlineSize = 0f;
 
     void Start()
     {

@@ -1773,7 +1773,7 @@ Transform:
   m_GameObject: {fileID: 48684141}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.9995059, w: 0.031433564}
-  m_LocalPosition: {x: 367.2, y: -7.7, z: 0}
+  m_LocalPosition: {x: 326.1, y: 2.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -1831,7 +1831,7 @@ Rigidbody2D:
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 1
-  m_Material: {fileID: 6200000, guid: 3807c1ed09ed7d34287aec019f886e81, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1854,8 +1854,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca341e1400a44c44bb63d562dc879f6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WheelRoller
-  torqueForce: 20
-  rb: {fileID: 0}
 --- !u!1 &51055242
 GameObject:
   m_ObjectHideFlags: 0
@@ -4271,7 +4269,7 @@ Transform:
   m_GameObject: {fileID: 205008526}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 594.37, y: -5.85, z: 0}
+  m_LocalPosition: {x: 594.37, y: -5.2, z: 0}
   m_LocalScale: {x: 2.5, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5960,6 +5958,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 252449531}
+  - component: {fileID: 252449532}
   m_Layer: 8
   m_Name: Ground
   m_TagString: Untagged
@@ -5976,7 +5975,7 @@ Transform:
   m_GameObject: {fileID: 252449530}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5987,6 +5986,28 @@ Transform:
   - {fileID: 1176781638}
   m_Father: {fileID: 98261658}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &252449532
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 252449530}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: f3ed8f19b23774540b6af05a5270d500, type: 2}
+  m_CullingMode: 2
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 1
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &255014936
 GameObject:
   m_ObjectHideFlags: 0
@@ -7470,7 +7491,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 322.5, y: 6.25, z: -10}
+  m_LocalPosition: {x: 512.52, y: 0.38, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13784,7 +13805,7 @@ Transform:
   m_GameObject: {fileID: 676692560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 322.5, y: 4, z: 0}
+  m_LocalPosition: {x: 512.52, y: -1.87, z: 0}
   m_LocalScale: {x: 0.85, y: 0.85, z: 0.85}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -15577,6 +15598,8 @@ GameObject:
   - component: {fileID: 732783315}
   - component: {fileID: 732783317}
   - component: {fileID: 732783316}
+  - component: {fileID: 732783319}
+  - component: {fileID: 732783320}
   m_Layer: 8
   m_Name: BellIsland-01-Drop-LowLeft
   m_TagString: Ground
@@ -15593,7 +15616,7 @@ Transform:
   m_GameObject: {fileID: 732783314}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 519.94995, y: 4.2, z: 0}
+  m_LocalPosition: {x: 519.4, y: -3.5, z: 0}
   m_LocalScale: {x: 1, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -15703,6 +15726,52 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!50 &732783319
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732783314}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
+--- !u!114 &732783320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732783314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c16cbf64ac3a44caf7e2c72082c83d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShakingPlatform2D
+  timeBeforeFall: 1.5
+  shakeMagnitude: 0.1
+  shakeSpeed: 100
+  resetDelay: 3
+  returnSpeed: 15
+  rotationReturnSpeed: 90
+  playerOnTop: 0
 --- !u!1 &734752466
 GameObject:
   m_ObjectHideFlags: 0
@@ -17980,6 +18049,8 @@ GameObject:
   - component: {fileID: 817257093}
   - component: {fileID: 817257095}
   - component: {fileID: 817257094}
+  - component: {fileID: 817257096}
+  - component: {fileID: 817257097}
   m_Layer: 8
   m_Name: BellIsland-04-Drop-MidRight
   m_TagString: Ground
@@ -17996,7 +18067,7 @@ Transform:
   m_GameObject: {fileID: 817257092}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 554.58997, y: -0.84, z: 0}
+  m_LocalPosition: {x: 554.58997, y: -3.5, z: 0}
   m_LocalScale: {x: 1, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -18106,6 +18177,52 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &817257096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817257092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c16cbf64ac3a44caf7e2c72082c83d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShakingPlatform2D
+  timeBeforeFall: 1.5
+  shakeMagnitude: 0.1
+  shakeSpeed: 100
+  resetDelay: 3
+  returnSpeed: 15
+  rotationReturnSpeed: 90
+  playerOnTop: 0
+--- !u!50 &817257097
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817257092}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &821801500
 GameObject:
   m_ObjectHideFlags: 0
@@ -22167,7 +22284,7 @@ Transform:
   m_GameObject: {fileID: 957081153}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 322.5, y: 7, z: -10}
+  m_LocalPosition: {x: 512.52, y: 1.13, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27189,9 +27306,12 @@ GameObject:
   - component: {fileID: 1162237811}
   - component: {fileID: 1162237810}
   - component: {fileID: 1162237812}
-  m_Layer: 11
+  - component: {fileID: 1162237814}
+  - component: {fileID: 1162237815}
+  - component: {fileID: 1162237816}
+  m_Layer: 13
   m_Name: Bell-Island-Control
-  m_TagString: Untagged
+  m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27277,7 +27397,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162237809}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 894b5335561161252b5fde7335b8555f, type: 3}
   m_Name: 
@@ -27297,6 +27417,182 @@ MonoBehaviour:
   - {fileID: 1176781638}
   targetWorldY: -5.85
   moveDuration: 0.85
+--- !u!114 &1162237814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1162237809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec2c5f941be8aa24583a6be0d0c964e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteOutline
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineShader: {fileID: 4800000, guid: 128e987d567d4e2c824d754223b3f3b0, type: 3}
+  currentOutlineSize: 0
+--- !u!60 &1162237815
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1162237809}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 6.9, y: 4.33}
+    newSize: {x: 6.9, y: 4.33}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 1.86, y: -2.085}
+      - {x: 1.9499999, y: -2.065}
+      - {x: 2.1, y: -2.0249999}
+      - {x: 2.28, y: -1.9649999}
+      - {x: 2.3899999, y: -1.915}
+      - {x: 2.56, y: -1.8349999}
+      - {x: 2.72, y: -1.735}
+      - {x: 2.8, y: -1.675}
+      - {x: 3.02, y: -1.4649999}
+      - {x: 3.1, y: -1.355}
+      - {x: 3.1899998, y: -1.225}
+      - {x: 3.24, y: -1.125}
+      - {x: 3.32, y: -0.935}
+      - {x: 3.34, y: -0.875}
+      - {x: 3.3799999, y: -0.745}
+      - {x: 3.4199998, y: -0.555}
+      - {x: 3.4399998, y: -0.405}
+      - {x: 3.4499998, y: -0.255}
+      - {x: 3.4499998, y: 0.195}
+      - {x: 3.4399998, y: 0.255}
+      - {x: 3.4199998, y: 0.345}
+      - {x: 3.36, y: 0.53499997}
+      - {x: 3.33, y: 0.60499996}
+      - {x: 3.25, y: 0.775}
+      - {x: 3.1499999, y: 0.945}
+      - {x: 3, y: 1.115}
+      - {x: 2.8799999, y: 1.225}
+      - {x: 2.75, y: 1.3349999}
+      - {x: 2.6499999, y: 1.415}
+      - {x: 2.49, y: 1.515}
+      - {x: 2.12, y: 1.6949999}
+      - {x: 1.79, y: 1.775}
+      - {x: 1.74, y: 1.8249999}
+      - {x: 1.66, y: 1.9549999}
+      - {x: 1.5799999, y: 2.0049999}
+      - {x: 1.43, y: 2.075}
+      - {x: 1.26, y: 2.135}
+      - {x: 1.06, y: 2.165}
+      - {x: 0.52, y: 2.165}
+      - {x: 0.32, y: 2.125}
+      - {x: 0.21, y: 2.095}
+      - {x: 0.11, y: 2.075}
+      - {x: 0, y: 2.0049999}
+      - {x: -0.07, y: 1.9449999}
+      - {x: -0.11, y: 1.8449999}
+      - {x: -0.099999994, y: 1.775}
+      - {x: -0.31, y: 1.7149999}
+      - {x: -0.41, y: 1.685}
+      - {x: -0.68, y: 1.5949999}
+      - {x: -0.90999997, y: 1.475}
+      - {x: -1.13, y: 1.3149999}
+      - {x: -1.25, y: 1.2149999}
+      - {x: -1.4399999, y: 1.015}
+      - {x: -1.5899999, y: 0.79499996}
+      - {x: -1.6899999, y: 0.59499997}
+      - {x: -1.81, y: 0.305}
+      - {x: -1.86, y: 0.085}
+      - {x: -2.11, y: 0.105}
+      - {x: -2.1, y: 0.415}
+      - {x: -2.11, y: 0.645}
+      - {x: -2.19, y: 0.755}
+      - {x: -2.29, y: 0.79499996}
+      - {x: -2.46, y: 0.85499996}
+      - {x: -2.62, y: 0.875}
+      - {x: -2.9299998, y: 0.865}
+      - {x: -3.1399999, y: 0.835}
+      - {x: -3.27, y: 0.805}
+      - {x: -3.3799999, y: 0.73499995}
+      - {x: -3.4399998, y: 0.685}
+      - {x: -3.4499998, y: 0.645}
+      - {x: -3.4499998, y: -0.095}
+      - {x: -3.4299998, y: -0.155}
+      - {x: -3.35, y: -0.255}
+      - {x: -3.23, y: -0.305}
+      - {x: -3.1299999, y: -0.33499998}
+      - {x: -2.95, y: -0.36499998}
+      - {x: -2.86, y: -0.375}
+      - {x: -2.4099998, y: -0.435}
+      - {x: -2.1499999, y: -0.465}
+      - {x: -2.03, y: -0.475}
+      - {x: -1.78, y: -0.585}
+      - {x: -1.77, y: -0.655}
+      - {x: -1.73, y: -0.895}
+      - {x: -1.68, y: -1.015}
+      - {x: -1.5799999, y: -1.225}
+      - {x: -1.48, y: -1.375}
+      - {x: -1.25, y: -1.615}
+      - {x: -1.11, y: -1.7149999}
+      - {x: -1.01, y: -1.785}
+      - {x: -0.81, y: -1.885}
+      - {x: -0.53, y: -2.0049999}
+      - {x: -0.28, y: -2.065}
+      - {x: -0.03, y: -2.115}
+      - {x: 0.099999994, y: -2.135}
+      - {x: 0.26999998, y: -2.155}
+      - {x: 0.37, y: -2.165}
+      - {x: 1.29, y: -2.165}
+      - {x: 1.5, y: -2.145}
+      - {x: 1.64, y: -2.125}
+  m_UseDelaunayMesh: 1
+--- !u!114 &1162237816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1162237809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9582920c98a37a47aea3d4f5255e5bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedInteractable
+  animator: {fileID: 252449532}
+  animationTriggerName: Play
+  activateAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &1169853578
 GameObject:
   m_ObjectHideFlags: 0
@@ -27399,6 +27695,8 @@ GameObject:
   - component: {fileID: 1176781638}
   - component: {fileID: 1176781640}
   - component: {fileID: 1176781639}
+  - component: {fileID: 1176781641}
+  - component: {fileID: 1176781642}
   m_Layer: 8
   m_Name: BellIsland-05-Drop-HighRight
   m_TagString: Ground
@@ -27415,7 +27713,7 @@ Transform:
   m_GameObject: {fileID: 1176781637}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 566.00995, y: 6.62, z: 0}
+  m_LocalPosition: {x: 566.00995, y: -3.2, z: 0}
   m_LocalScale: {x: 1, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -27525,6 +27823,52 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1176781641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1176781637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c16cbf64ac3a44caf7e2c72082c83d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShakingPlatform2D
+  timeBeforeFall: 1.5
+  shakeMagnitude: 0.1
+  shakeSpeed: 100
+  resetDelay: 3
+  returnSpeed: 15
+  rotationReturnSpeed: 90
+  playerOnTop: 0
+--- !u!50 &1176781642
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1176781637}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &1180881552
 GameObject:
   m_ObjectHideFlags: 0
@@ -30132,6 +30476,8 @@ GameObject:
   - component: {fileID: 1341603331}
   - component: {fileID: 1341603333}
   - component: {fileID: 1341603332}
+  - component: {fileID: 1341603334}
+  - component: {fileID: 1341603335}
   m_Layer: 8
   m_Name: BellIsland-02-Drop-HighLeft
   m_TagString: Ground
@@ -30148,7 +30494,7 @@ Transform:
   m_GameObject: {fileID: 1341603330}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 531.38, y: 6.86, z: 0}
+  m_LocalPosition: {x: 531.38, y: -3.6, z: 0}
   m_LocalScale: {x: 1, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -30258,6 +30604,52 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1341603334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341603330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c16cbf64ac3a44caf7e2c72082c83d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShakingPlatform2D
+  timeBeforeFall: 1.5
+  shakeMagnitude: 0.1
+  shakeSpeed: 100
+  resetDelay: 3
+  returnSpeed: 15
+  rotationReturnSpeed: 90
+  playerOnTop: 0
+--- !u!50 &1341603335
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341603330}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &1345722184
 GameObject:
   m_ObjectHideFlags: 0
@@ -38723,6 +39115,8 @@ GameObject:
   - component: {fileID: 1728854008}
   - component: {fileID: 1728854010}
   - component: {fileID: 1728854009}
+  - component: {fileID: 1728854011}
+  - component: {fileID: 1728854012}
   m_Layer: 8
   m_Name: BellIsland-03-Rise-CenterLow
   m_TagString: Ground
@@ -38739,7 +39133,7 @@ Transform:
   m_GameObject: {fileID: 1728854007}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 542.86, y: -10.13, z: 0}
+  m_LocalPosition: {x: 542.86, y: -3.9, z: 0}
   m_LocalScale: {x: 1, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -38849,6 +39243,52 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1728854011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1728854007}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c16cbf64ac3a44caf7e2c72082c83d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShakingPlatform2D
+  timeBeforeFall: 1.5
+  shakeMagnitude: 0.1
+  shakeSpeed: 100
+  resetDelay: 3
+  returnSpeed: 15
+  rotationReturnSpeed: 90
+  playerOnTop: 0
+--- !u!50 &1728854012
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1728854007}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &1730292205
 GameObject:
   m_ObjectHideFlags: 0
@@ -42521,6 +42961,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpriteOutline
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineShader: {fileID: 4800000, guid: 128e987d567d4e2c824d754223b3f3b0, type: 3}
+  currentOutlineSize: 0
 --- !u!60 &1944476190
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -45693,6 +46134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpriteOutline
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineShader: {fileID: 4800000, guid: 128e987d567d4e2c824d754223b3f3b0, type: 3}
+  currentOutlineSize: 0
 --- !u!212 &2093885946
 SpriteRenderer:
   serializedVersion: 2
