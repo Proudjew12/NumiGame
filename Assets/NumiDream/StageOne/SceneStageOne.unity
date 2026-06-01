@@ -7443,7 +7443,7 @@ Camera:
   far clip plane: 1000
   field of view: 70.9
   orthographic: 1
-  orthographic size: 20
+  orthographic size: 17
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -7468,7 +7468,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 547.4, y: 1.15, z: -20}
+  m_LocalPosition: {x: 550.2, y: 1.15, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13782,7 +13782,7 @@ Transform:
   m_GameObject: {fileID: 676692560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 519.7, y: -1.6, z: 0}
+  m_LocalPosition: {x: -15.7, y: 3.6, z: 0}
   m_LocalScale: {x: 0.85, y: 0.85, z: 0.85}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -22261,7 +22261,7 @@ Transform:
   m_GameObject: {fileID: 957081153}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 519.7, y: 1.4, z: -10}
+  m_LocalPosition: {x: -15.7, y: 6.6, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27568,6 +27568,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedInteractable
   activateAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  puzzleCamera: {fileID: 1877258434}
   island1: {fileID: 732783315}
   island2: {fileID: 1341603331}
   island4: {fileID: 817257093}
@@ -27576,6 +27577,11 @@ MonoBehaviour:
   tapWindowDuration: 1.2
   groupPauseDuration: 0.8
   moveSpeed: 3
+  dropDelay: 0.6
+  idleResetDuration: 4
+  shakeDuration: 0.4
+  shakeMagnitude: 0.08
+  shakeSpeed: 40
 --- !u!1 &1169853578
 GameObject:
   m_ObjectHideFlags: 0
@@ -42227,7 +42233,7 @@ Transform:
   m_GameObject: {fileID: 1877258432}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 547.4, y: 1.9, z: -20}
+  m_LocalPosition: {x: 550.2, y: 1.9, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -42258,7 +42264,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 70.9
-    OrthographicSize: 20
+    OrthographicSize: 17
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
