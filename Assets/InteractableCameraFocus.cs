@@ -20,6 +20,8 @@ public class InteractableCameraFocus : MonoBehaviour
 
     private readonly HashSet<SpriteOutline> activeOutlines = new();
 
+    public Transform detectionPivot;
+
     private void Start()
     {
         if (playerCamera != null)
@@ -46,7 +48,7 @@ public class InteractableCameraFocus : MonoBehaviour
     // Single overlap call — updates outlines and caches results for focus use
     private void UpdateOutlines()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRadius, ~0);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(detectionPivot.position, detectionRadius, ~0);
 
         HashSet<SpriteOutline> inRangeOutlines = new();
 
@@ -146,6 +148,6 @@ public class InteractableCameraFocus : MonoBehaviour
         Gizmos.color = nearInteractable
             ? new Color(0f, 0.4f, 1f, 0.6f)
             : new Color(0f, 1f, 1f, 0.3f);
-        Gizmos.DrawWireSphere(transform.position, detectionRadius);
+        Gizmos.DrawWireSphere(detectionPivot.position, detectionRadius);
     }
 }

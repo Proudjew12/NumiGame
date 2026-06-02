@@ -31,24 +31,31 @@ namespace NumiDream.StageOne.Puzzles
         [InspectorName("Rope")]
         [SerializeField] private Transform rope;
         [Space(4)]
-        [InspectorName("Rope Y")]
+        [InspectorName("Rope Target Y (final)")]
         [SerializeField] private float ropeTargetWorldY = 5.08f;
         [Space(4)]
         [InspectorName("Hands Ground")]
         [SerializeField] private Transform handsUpGround;
         [Space(4)]
-        [InspectorName("Hands Y")]
+        [InspectorName("Hands Target Y (final)")]
         [SerializeField] private float handsTargetWorldY = -5.16f;
 
         [Space(10)]
-        [Header("--------- Motion ---------")]
+        [Header("--------- Tap Motion ---------")]
         [Header("+Feel+")]
         [Space(4)]
-        [InspectorName("Move Time")]
-        [SerializeField] private float moveDuration = 1.25f;
+        [InspectorName("Step Size (units per tap)")]
+        [SerializeField] private float stepSize = 0.25f;
+        [Space(4)]
+        [InspectorName("Step Duration (sec)")]
+        [SerializeField] private float stepDuration = 0.15f;
 
         private Coroutine _moveRoutine;
         private bool _completed;
+
+        // Tracks where each object currently is (or is animating toward)
+        private float _ropeCurrentY;
+        private float _handsCurrentY;
 
         public bool IsCompleted => _completed;
 
@@ -60,36 +67,50 @@ namespace NumiDream.StageOne.Puzzles
         private void Awake()
         {
             if (rope == null)
-            {
                 rope = transform;
-            }
 
             FindPlayerIfNeeded();
             RefreshCompletionState();
+
+            // Initialise current Y trackers from actual world positions
+            _ropeCurrentY  = rope  != null ? rope.position.y          : ropeTargetWorldY;
+            _handsCurrentY = handsUpGround != null ? handsUpGround.position.y : handsTargetWorldY;
         }
 
         private void Update()
         {
-            if (_completed || _moveRoutine != null || !WasLiftPressed() || !CanPlayerInteract())
-            {
+            if (_completed || !WasLiftPressed() || !CanPlayerInteract())
                 return;
-            }
 
-            TriggerLift();
+            TriggerTap();
         }
 
-        [ContextMenu("Trigger Puzzle Four Lift")]
-        public void TriggerLift()
+        // ──────────────────────────────────────────────
+        //  Public API
+        // ──────────────────────────────────────────────
+
+        [ContextMenu("Trigger One Tap")]
+        public void TriggerTap()
         {
-            if (_completed || _moveRoutine != null)
-            {
+            if (_completed)
                 return;
-            }
 
-            _moveRoutine = StartCoroutine(MoveRoutine());
+            // Calculate the next Y values clamped to their targets
+            float nextRopeY  = Mathf.Min(_ropeCurrentY  + stepSize, ropeTargetWorldY);
+            float nextHandsY = Mathf.Max(_handsCurrentY - stepSize, handsTargetWorldY);
+
+            // Snap current trackers so a new tap mid-animation starts from here
+            _ropeCurrentY  = nextRopeY;
+            _handsCurrentY = nextHandsY;
+
+            // Restart the step animation toward the new targets
+            if (_moveRoutine != null)
+                StopCoroutine(_moveRoutine);
+
+            _moveRoutine = StartCoroutine(StepRoutine(nextRopeY, nextHandsY));
         }
 
-        [ContextMenu("Complete Puzzle Four Lift")]
+        [ContextMenu("Complete Puzzle Four Lift Instantly")]
         public void CompleteLiftNow()
         {
             if (_moveRoutine != null)
@@ -102,43 +123,61 @@ namespace NumiDream.StageOne.Puzzles
             _completed = true;
         }
 
-        private IEnumerator MoveRoutine()
+        // ──────────────────────────────────────────────
+        //  Coroutines
+        // ──────────────────────────────────────────────
+
+        private IEnumerator StepRoutine(float targetRopeY, float targetHandsY)
         {
-            var ropeStart = rope != null ? rope.position : Vector3.zero;
-            var handsStart = handsUpGround != null ? handsUpGround.position : Vector3.zero;
-            var ropeTarget = GetTargetPosition(ropeStart, ropeTargetWorldY);
-            var handsTarget = GetTargetPosition(handsStart, handsTargetWorldY);
-            var elapsed = 0f;
-            var duration = Mathf.Max(0.01f, moveDuration);
+            var ropeStart  = rope           != null ? rope.position           : Vector3.zero;
+            var handsStart = handsUpGround  != null ? handsUpGround.position  : Vector3.zero;
+
+            var ropeTarget  = GetTargetPosition(ropeStart,  targetRopeY);
+            var handsTarget = GetTargetPosition(handsStart, targetHandsY);
+
+            float elapsed  = 0f;
+            float duration = Mathf.Max(0.01f, stepDuration);
 
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                var t = Mathf.Clamp01(elapsed / duration);
-                t = t * t * (3f - 2f * t);
+                float t = Mathf.Clamp01(elapsed / duration);
+                t = t * t * (3f - 2f * t); // smoothstep
 
-                MoveTo(rope, Vector3.LerpUnclamped(ropeStart, ropeTarget, t));
+                MoveTo(rope,          Vector3.LerpUnclamped(ropeStart,  ropeTarget,  t));
                 MoveTo(handsUpGround, Vector3.LerpUnclamped(handsStart, handsTarget, t));
 
                 yield return null;
             }
 
-            SetFinalPositions();
-            _completed = true;
+            // Snap to exact targets
+            MoveTo(rope,          ropeTarget);
+            MoveTo(handsUpGround, handsTarget);
+
             _moveRoutine = null;
+
+            // Check if fully done
+            if (Mathf.Approximately(targetRopeY, ropeTargetWorldY) &&
+                Mathf.Approximately(targetHandsY, handsTargetWorldY))
+            {
+                _completed = true;
+            }
         }
+
+        // ──────────────────────────────────────────────
+        //  Helpers
+        // ──────────────────────────────────────────────
 
         private void SetFinalPositions()
         {
             if (rope != null)
-            {
                 MoveTo(rope, GetTargetPosition(rope.position, ropeTargetWorldY));
-            }
 
             if (handsUpGround != null)
-            {
                 MoveTo(handsUpGround, GetTargetPosition(handsUpGround.position, handsTargetWorldY));
-            }
+
+            _ropeCurrentY  = ropeTargetWorldY;
+            _handsCurrentY = handsTargetWorldY;
         }
 
         private static Vector3 GetTargetPosition(Vector3 current, float targetY)
@@ -150,14 +189,12 @@ namespace NumiDream.StageOne.Puzzles
         private static void MoveTo(Transform target, Vector3 position)
         {
             if (target != null)
-            {
                 target.position = position;
-            }
         }
 
         private void RefreshCompletionState()
         {
-            var ropeComplete = rope == null || Mathf.Approximately(rope.position.y, ropeTargetWorldY);
+            var ropeComplete  = rope          == null || Mathf.Approximately(rope.position.y,          ropeTargetWorldY);
             var handsComplete = handsUpGround == null || Mathf.Approximately(handsUpGround.position.y, handsTargetWorldY);
             _completed = ropeComplete && handsComplete;
         }
@@ -165,9 +202,7 @@ namespace NumiDream.StageOne.Puzzles
         private bool CanPlayerInteract()
         {
             if (!requirePlayerInRange)
-            {
                 return true;
-            }
 
             FindPlayerIfNeeded();
             return player != null && Vector2.Distance(player.position, transform.position) <= activationDistance;
@@ -176,38 +211,32 @@ namespace NumiDream.StageOne.Puzzles
         private void FindPlayerIfNeeded()
         {
             if (player != null)
-            {
                 return;
-            }
 
             var playerObject = GameObject.FindGameObjectWithTag(playerTag);
             if (playerObject != null)
-            {
                 player = playerObject.transform;
-            }
         }
 
         private static bool WasLiftPressed()
         {
 #if ENABLE_INPUT_SYSTEM
             var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.tKey.wasPressedThisFrame)
-            {
-                return true;
-            }
-#endif
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKeyDown(KeyCode.T);
+            return keyboard != null && keyboard.tKey.wasPressedThisFrame;
 #else
             return false;
 #endif
         }
 
+        // ──────────────────────────────────────────────
+        //  Editor
+        // ──────────────────────────────────────────────
+
         private void OnValidate()
         {
-            activationDistance = Mathf.Max(0f, activationDistance);
-            moveDuration = Mathf.Max(0.01f, moveDuration);
+            activationDistance = Mathf.Max(0f,    activationDistance);
+            stepDuration       = Mathf.Max(0.01f, stepDuration);
+            stepSize           = Mathf.Max(0.01f, stepSize);
         }
 
         private void OnDrawGizmosSelected()
@@ -219,19 +248,17 @@ namespace NumiDream.StageOne.Puzzles
             }
 
             Gizmos.color = new Color(0.45f, 1f, 0.45f, 0.75f);
-            DrawTargetLine(rope, ropeTargetWorldY);
+            DrawTargetLine(rope,          ropeTargetWorldY);
             DrawTargetLine(handsUpGround, handsTargetWorldY);
         }
 
         private static void DrawTargetLine(Transform target, float targetY)
         {
             if (target == null)
-            {
                 return;
-            }
 
-            var targetPosition = target.position;
-            targetPosition.y = targetY;
+            var targetPosition   = target.position;
+            targetPosition.y     = targetY;
             Gizmos.DrawLine(target.position, targetPosition);
             Gizmos.DrawWireSphere(targetPosition, 0.2f);
         }

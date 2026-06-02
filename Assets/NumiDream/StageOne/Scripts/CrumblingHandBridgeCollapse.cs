@@ -58,6 +58,40 @@ namespace NumiDream.StageOne
         [SerializeField] private bool fadeWhileFalling = true;
 
         [Space(10)]
+        [Header("--------- Reset On Respawn ---------")]
+        [Space(4)]
+        [InspectorName("Auto Reset On Enable")]
+        [Tooltip("If true, the bridge fully resets every time this GameObject is re-enabled (e.g. when your respawn system re-enables the area).")]
+        [SerializeField] private bool autoResetOnEnable = false;
+
+        [Space(10)]
+        [Header("--------- Auto Rebuild ---------")]
+        [Header("+Each piece rebuilds automatically after falling+")]
+        [Space(4)]
+        [InspectorName("Auto Rebuild")]
+        [Tooltip("Each piece will automatically animate back into place after a delay once it has finished falling.")]
+        [SerializeField] private bool autoRebuildAfterFall = true;
+        [Space(4)]
+        [InspectorName("Rebuild Delay (s)")]
+        [Tooltip("Seconds to wait after a piece finishes falling before it starts rebuilding.")]
+        [SerializeField] private float autoRebuildDelay = 10f;
+        [Space(4)]
+        [InspectorName("Rebuild Duration")]
+        [SerializeField] private float autoRebuildDuration = 0.9f;
+        [Space(4)]
+        [InspectorName("Rebuild Start Drop")]
+        [SerializeField] private float autoRebuildStartDrop = 1.2f;
+        [Space(4)]
+        [InspectorName("Rebuild Side Drift")]
+        [SerializeField] private float autoRebuildSideDrift = 0.4f;
+        [Space(4)]
+        [InspectorName("Rebuild Arc Height")]
+        [SerializeField] private float autoRebuildArcHeight = 0.5f;
+        [Space(4)]
+        [InspectorName("Rebuild Settle Duration")]
+        [SerializeField] private float autoRebuildSettleDuration = 0.35f;
+
+        [Space(10)]
         [Header("--------- Collision ---------")]
         [Header("+Walk Surface+")]
         [Space(4)]
@@ -83,8 +117,6 @@ namespace NumiDream.StageOne
         private bool _collapseEnabled = true;
         private GameObject _generatedWalkSurfaceRoot;
 
-        
-
         private void Awake()
         {
             if (pieceRoot == null)
@@ -109,6 +141,13 @@ namespace NumiDream.StageOne
         {
             EnsurePiecesCached();
             ConfigureSegmentedWalkSurface();
+
+            // If autoResetOnEnable is true, fully restore the bridge every time
+            // the GameObject is re-enabled (e.g. after a respawn that toggles this object).
+            if (autoResetOnEnable)
+            {
+                ResetBridge();
+            }
         }
 
         private void Update()
@@ -139,6 +178,50 @@ namespace NumiDream.StageOne
                     piece.HasStarted = true;
                     piece.Routine = StartCoroutine(CrumblePiece(piece));
                 }
+            }
+        }
+
+        // -----------------------------------------------------------------------
+        //  RESET — call this from your respawn / checkpoint system to fully
+        //  restore every piece so the player can attempt the bridge again.
+        //
+        //  Example from a respawn manager:
+        //      bridge.ResetBridge();
+        //
+        //  Or set "Auto Reset On Enable" in the Inspector and just disable/enable
+        //  this GameObject as part of your respawn flow.
+        // -----------------------------------------------------------------------
+        public void ResetBridge()
+        {
+            EnsurePiecesCached();
+
+            _collapseEnabled = true;
+
+            foreach (var piece in _pieces)
+            {
+                if (piece.Transform == null)
+                {
+                    continue;
+                }
+
+                // Stop any in-progress shake/fall coroutine
+                if (piece.Routine != null)
+                {
+                    StopCoroutine(piece.Routine);
+                    piece.Routine = null;
+                }
+
+                // Restore transform and colour
+                RestorePieceTransform(piece);
+
+                // Re-activate the piece GameObject
+                piece.Transform.gameObject.SetActive(true);
+
+                // Re-enable walk-surface support collider
+                SetPieceSupportEnabled(piece, true);
+
+                // Allow the piece to trigger collapse again
+                piece.HasStarted = false;
             }
         }
 
@@ -592,6 +675,53 @@ namespace NumiDream.StageOne
                 SetPieceSupportEnabled(piece, false);
                 piece.Transform.gameObject.SetActive(false);
             }
+
+            piece.Routine = null;
+
+            if (autoRebuildAfterFall && piece.Transform != null)
+            {
+                piece.Routine = StartCoroutine(AutoRebuildPiece(piece));
+            }
+        }
+
+        private IEnumerator AutoRebuildPiece(PieceState piece)
+        {
+            // Wait the minimum delay first
+            yield return new WaitForSeconds(Mathf.Max(0f, autoRebuildDelay));
+
+            if (piece.Transform == null)
+            {
+                piece.Routine = null;
+                yield break;
+            }
+
+            // Then wait until the player is behind (to the left of) this piece.
+            // This way the piece quietly rebuilds while the player isn't watching.
+            if (player != null)
+            {
+                while (player.position.x >= piece.TriggerWorldX)
+                {
+                    yield return null;
+                }
+            }
+
+            if (piece.Transform == null)
+            {
+                piece.Routine = null;
+                yield break;
+            }
+
+            // Reuse the existing RebuildPiece coroutine with our auto-rebuild settings.
+            // disableFutureCollapse = false so HasStarted resets and the piece can fall again.
+            yield return RebuildPiece(
+                piece,
+                delay: 0f,
+                rebuildDuration: autoRebuildDuration,
+                rebuildStartDrop: autoRebuildStartDrop,
+                rebuildSideDrift: autoRebuildSideDrift,
+                rebuildArcHeight: autoRebuildArcHeight,
+                rebuildSettleDuration: autoRebuildSettleDuration,
+                disableFutureCollapse: false);
 
             piece.Routine = null;
         }

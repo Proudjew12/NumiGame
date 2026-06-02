@@ -110,6 +110,7 @@ public class InteractableManipulator : MonoBehaviour
         {
             transform.position = originPoint.position;
             transform.localScale = Vector3.one;
+            transform.rotation = Quaternion.identity;
             _isSnappingBack = false;
             if (_rb != null && !IsControlled)
             {
@@ -129,6 +130,7 @@ public class InteractableManipulator : MonoBehaviour
         {
             transform.position = originPoint.position;
             transform.localScale = Vector3.one;
+            transform.rotation = Quaternion.identity;
             _isSnappingBack = false;
             StartCoroutine(FlashInstantSnap());
         }
@@ -146,19 +148,19 @@ public class InteractableManipulator : MonoBehaviour
         instantSnap = false;
     }
 
-private void OnCollisionEnter2D(Collision2D col)
-{
-    if (col.gameObject.CompareTag("Player"))
+    private void OnCollisionEnter2D(Collision2D col)
     {
-        _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
+        if (col.gameObject.CompareTag("Player"))
+        {
+            _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
+        }
     }
-}
 
-private void OnCollisionExit2D(Collision2D col)
-{
-    if (col.gameObject.CompareTag("Player"))
+    private void OnCollisionExit2D(Collision2D col)
     {
-        _rb.constraints = RigidbodyConstraints2D.None;
+        if (col.gameObject.CompareTag("Player"))
+        {
+            _rb.constraints = RigidbodyConstraints2D.None;
+        }
     }
-}
 }
