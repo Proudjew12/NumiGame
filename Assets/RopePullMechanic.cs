@@ -1,12 +1,9 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class RopePullMechanic : MonoBehaviour
 {
-    [Header("Input")]
-    [SerializeField] private InputActionReference activateAction;
-
     [Header("References")]
+    [SerializeField] private RightStickSpinInput spinInput;
     [SerializeField] private SpriteOutline ropeOutline;
     [SerializeField] private Transform ropeTransform;
     [SerializeField] private Transform handsGround;
@@ -16,12 +13,10 @@ public class RopePullMechanic : MonoBehaviour
     [SerializeField] private float handsTargetY = -5.16f;
 
     [Header("Pull Settings")]
-    [Tooltip("How many button presses to fully complete the mechanic")]
-    [SerializeField] private int totalPresses = 25;
-    [Tooltip("How smoothly the objects move toward their targets after each press")]
+    [SerializeField] private float totalDegreesRequired = 1080f;
     [SerializeField] private float moveSpeed = 5f;
 
-    private int pressCount = 0;
+    private float accumulatedDegrees = 0f;
     private Vector3 ropeStartPos;
     private Vector3 handsStartPos;
     private Vector3 ropeCurrentTarget;
@@ -32,21 +27,17 @@ public class RopePullMechanic : MonoBehaviour
     {
         ropeStartPos = ropeTransform.localPosition;
         handsStartPos = handsGround.localPosition;
-
         ropeCurrentTarget = ropeStartPos;
         handsCurrentTarget = handsStartPos;
+
+        if (spinInput != null)
+            spinInput.onSpinDelta.AddListener(OnSpinDelta);
     }
 
-    private void OnEnable()
+    private void OnDestroy()
     {
-        if (activateAction != null)
-            activateAction.action.started += OnActivatePressed;
-    }
-
-    private void OnDisable()
-    {
-        if (activateAction != null)
-            activateAction.action.started -= OnActivatePressed;
+        if (spinInput != null)
+            spinInput.onSpinDelta.RemoveListener(OnSpinDelta);
     }
 
     void Update()
@@ -54,43 +45,36 @@ public class RopePullMechanic : MonoBehaviour
         if (mechanicComplete) return;
 
         ropeTransform.localPosition = Vector3.Lerp(
-            ropeTransform.localPosition,
-            ropeCurrentTarget,
-            Time.deltaTime * moveSpeed
-        );
+            ropeTransform.localPosition, ropeCurrentTarget, Time.deltaTime * moveSpeed);
 
         handsGround.localPosition = Vector3.Lerp(
-            handsGround.localPosition,
-            handsCurrentTarget,
-            Time.deltaTime * moveSpeed
-        );
+            handsGround.localPosition, handsCurrentTarget, Time.deltaTime * moveSpeed);
     }
 
-    private void OnActivatePressed(InputAction.CallbackContext _)
+    public void OnSpinDelta(float degrees)
     {
         if (mechanicComplete) return;
         if (ropeOutline == null || ropeOutline.currentOutlineSize <= 0f) return;
 
-        pressCount++;
+        accumulatedDegrees = Mathf.Min(accumulatedDegrees + degrees, totalDegreesRequired);
+        float progress = accumulatedDegrees / totalDegreesRequired;
 
-        float progress = Mathf.Clamp01((float)pressCount / totalPresses);
+        ropeCurrentTarget = new Vector3(ropeStartPos.x,
+            Mathf.Lerp(ropeStartPos.y, ropeTargetY, progress), ropeStartPos.z);
 
-        float newRopeY = Mathf.Lerp(ropeStartPos.y, ropeTargetY, progress);
-        ropeCurrentTarget = new Vector3(ropeStartPos.x, newRopeY, ropeStartPos.z);
+        handsCurrentTarget = new Vector3(handsStartPos.x,
+            Mathf.Lerp(handsStartPos.y, handsTargetY, progress), handsStartPos.z);
 
-        float newHandsY = Mathf.Lerp(handsStartPos.y, handsTargetY, progress);
-        handsCurrentTarget = new Vector3(handsStartPos.x, newHandsY, handsStartPos.z);
-
-        if (pressCount >= totalPresses)
+        if (accumulatedDegrees >= totalDegreesRequired)
         {
             mechanicComplete = true;
-            Debug.Log("[RopePullMechanic] Puzzle complete! Hands have risen fully.");
+            Debug.Log("[RopePullMechanic] Puzzle complete!");
         }
     }
 
     public void ResetMechanic()
     {
-        pressCount = 0;
+        accumulatedDegrees = 0f;
         mechanicComplete = false;
         ropeCurrentTarget = ropeStartPos;
         handsCurrentTarget = handsStartPos;

@@ -89,10 +89,11 @@ public class InteractableCameraFocus : MonoBehaviour
         GameObject closest = GetClosestInteractable();
         if (closest == null) return;
 
-        InteractableManipulator manipulator = closest.GetComponent<InteractableManipulator>();
+        // Check self and children for the manipulator
+        InteractableManipulator manipulator = closest.GetComponentInChildren<InteractableManipulator>();
         if (manipulator == null) return;
 
-        playerCamera.Follow = closest.transform;
+        playerCamera.Follow = manipulator.transform;
         isFocusingObject = true;
 
         currentManipulator = manipulator;
@@ -110,7 +111,7 @@ public class InteractableCameraFocus : MonoBehaviour
 
     private GameObject GetClosestInteractable()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRadius, ~0);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(detectionPivot.position, detectionRadius, ~0);
 
         GameObject closest = null;
         float closestDist = float.MaxValue;
@@ -120,7 +121,16 @@ public class InteractableCameraFocus : MonoBehaviour
             Transform interactableTransform = FindInteractableInParents(hit.transform);
             if (interactableTransform == null) continue;
 
-            float dist = Vector2.Distance(transform.position, interactableTransform.position);
+            // Must have a manipulator on itself or any child
+            InteractableManipulator manipulator =
+                interactableTransform.GetComponentInChildren<InteractableManipulator>();
+            if (manipulator == null) continue;
+
+            // Outline must be visible (size > 0)
+            SpriteOutline outline = interactableTransform.GetComponentInChildren<SpriteOutline>();
+            if (outline == null || outline.currentOutlineSize <= 0f) continue;
+
+            float dist = Vector2.Distance(detectionPivot.position, interactableTransform.position);
             if (dist < closestDist)
             {
                 closestDist = dist;

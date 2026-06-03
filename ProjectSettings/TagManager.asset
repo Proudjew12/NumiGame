@@ -10,6 +10,7 @@ TagManager:
   - Trigger
   - Interactable
   - WheelGround
+  - Reset
   layers:
   - Default
   - TransparentFX
