@@ -1165,7 +1165,7 @@ namespace DreamScripts.EditorTools
             try
             {
                 var utc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
-                return LeftToRightMarker + utc.ToLocalTime().ToString("ddd yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+                return LeftToRightMarker + utc.ToLocalTime().ToString("d,M,yyyy HH:mm", CultureInfo.InvariantCulture);
             }
             catch (ArgumentOutOfRangeException)
             {
