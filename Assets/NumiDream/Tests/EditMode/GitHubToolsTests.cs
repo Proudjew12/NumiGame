@@ -205,6 +205,7 @@ namespace NumiDream.Tests.EditMode
             var row = rows.FirstOrDefault(value => value.StartsWith("history/scene-one|", StringComparison.Ordinal));
 
             Assert.That(row, Is.Not.Null);
+            Assert.That(row, Does.Contain(((char)0x200E).ToString()));
             Assert.That(row, Does.Match(@"[A-Z][a-z]{2} \d{4}-\d{2}-\d{2} \d{2}:\d{2}"));
             Assert.That(row, Does.Contain("|Test User|"));
             Assert.That(row, Does.Contain("local + GitHub"));
