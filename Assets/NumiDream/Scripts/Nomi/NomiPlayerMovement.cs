@@ -136,6 +136,11 @@ namespace NumiDream.Nomi
         private readonly ContactPoint2D[] _groundContacts = new ContactPoint2D[16];
         private readonly RaycastHit2D[] _groundProbeHits = new RaycastHit2D[12];
 
+        public bool IsGrounded => _isGrounded;
+        public float MoveInput => _moveInput;
+        public float HorizontalSpeed => body != null ? Mathf.Abs(body.linearVelocity.x) : 0f;
+        public bool IsMovementAudioAllowed => !_externalMovementLocked && !IsLandingMovementLocked() && !_jumpTakeoffQueued;
+
         private void Reset()
         {
             FindReferences();

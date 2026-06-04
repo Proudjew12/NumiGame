@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -37,6 +38,19 @@ namespace NumiDream.StageOne.Puzzles
         [Space(4)]
         [InspectorName("Ring Time")]
         [SerializeField] private float ringDuration = 0.28f;
+        [Space(4)]
+        [InspectorName("Sounds")]
+        [SerializeField] private AudioClip[] bellSounds = Array.Empty<AudioClip>();
+        [Space(4)]
+        [InspectorName("Volume")]
+        [SerializeField] private float bellSoundVolume = 0.8f;
+        [InspectorName("Spatial Blend")]
+        [SerializeField] private float bellSoundSpatialBlend = 0.15f;
+        [Space(4)]
+        [InspectorName("Output")]
+        [SerializeField] private AudioMixerGroup bellSoundOutput;
+        [Space(4)]
+        [SerializeField] private AudioSource bellAudioSource;
 
         [Space(10)]
         [Header("--------- Islands ---------")]
@@ -73,6 +87,7 @@ namespace NumiDream.StageOne.Puzzles
             }
 
             FindPlayerIfNeeded();
+            ConfigureBellAudioSource();
             CacheStartPositions();
             RefreshCompletionState();
         }
@@ -114,6 +129,7 @@ namespace NumiDream.StageOne.Puzzles
             }
 
             RingBell();
+            PlayBellSound();
             _moveRoutine = StartCoroutine(MoveIslandRoutine(islandIndex));
         }
 
@@ -215,6 +231,47 @@ namespace NumiDream.StageOne.Puzzles
             _ringRoutine = null;
         }
 
+        private void PlayBellSound()
+        {
+            if (bellAudioSource == null || bellSounds == null || bellSounds.Length == 0 || bellSoundVolume <= 0f)
+            {
+                return;
+            }
+
+            var clip = GetBellSound();
+            if (clip == null)
+            {
+                return;
+            }
+
+            bellAudioSource.pitch = 1f;
+            bellAudioSource.PlayOneShot(clip, bellSoundVolume);
+        }
+
+        private AudioClip GetBellSound()
+        {
+            var index = UnityEngine.Random.Range(0, bellSounds.Length);
+            return bellSounds[index];
+        }
+
+        private void ConfigureBellAudioSource()
+        {
+            if (bellAudioSource == null)
+            {
+                bellAudioSource = GetComponent<AudioSource>();
+            }
+
+            if (bellAudioSource == null)
+            {
+                bellAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            bellAudioSource.playOnAwake = false;
+            bellAudioSource.loop = false;
+            bellAudioSource.spatialBlend = Mathf.Clamp01(bellSoundSpatialBlend);
+            bellAudioSource.outputAudioMixerGroup = bellSoundOutput;
+        }
+
         private void CompletePuzzle()
         {
             _completed = true;
@@ -302,6 +359,8 @@ namespace NumiDream.StageOne.Puzzles
             activationDistance = Mathf.Max(0f, activationDistance);
             ringAngle = Mathf.Max(0f, ringAngle);
             ringDuration = Mathf.Max(0f, ringDuration);
+            bellSoundVolume = Mathf.Clamp01(bellSoundVolume);
+            bellSoundSpatialBlend = Mathf.Clamp01(bellSoundSpatialBlend);
             moveDuration = Mathf.Max(0.01f, moveDuration);
         }
 
