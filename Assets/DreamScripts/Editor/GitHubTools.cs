@@ -24,6 +24,23 @@ namespace DreamScripts.EditorTools
         private const float BranchLastUpdateColumnWidth = 162f;
         private const float BranchAuthorColumnWidth = 132f;
         private const float BranchStatusColumnWidth = 128f;
+        private const float BranchRowHeight = 30f;
+        private static readonly string LeftToRightMarker = ((char)0x200E).ToString();
+        private static bool _branchStylesInitialized;
+        private static bool _branchStylesProSkin;
+        private static GUIStyle _branchHeaderStyle;
+        private static GUIStyle _branchHeaderLabelStyle;
+        private static GUIStyle _branchOddRowStyle;
+        private static GUIStyle _branchEvenRowStyle;
+        private static GUIStyle _branchSelectedRowStyle;
+        private static GUIStyle _branchNameStyle;
+        private static GUIStyle _branchSelectedNameStyle;
+        private static GUIStyle _branchMetaStyle;
+        private static GUIStyle _statusCurrentRemoteStyle;
+        private static GUIStyle _statusCurrentLocalStyle;
+        private static GUIStyle _statusLocalRemoteStyle;
+        private static GUIStyle _statusRemoteOnlyStyle;
+        private static GUIStyle _statusLocalOnlyStyle;
 
         static GitHubTools()
         {
@@ -1148,7 +1165,7 @@ namespace DreamScripts.EditorTools
             try
             {
                 var utc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
-                return utc.ToLocalTime().ToString("ddd yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+                return LeftToRightMarker + utc.ToLocalTime().ToString("ddd yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -2407,10 +2424,16 @@ namespace DreamScripts.EditorTools
                         continue;
                     }
 
+                    var rowIndex = visibleCount;
                     visibleCount++;
-                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.BeginHorizontal(GetBranchRowStyle(selected: _selected.Contains(choice.Name), rowIndex: rowIndex), GUILayout.Height(BranchRowHeight));
                     var selected = _selected.Contains(choice.Name);
-                    var nextSelected = EditorGUILayout.ToggleLeft(choice.Name, selected, GUILayout.Height(24));
+                    var nextSelected = GUILayout.Toggle(selected, GUIContent.none, GUILayout.Width(24), GUILayout.Height(24));
+                    if (GUILayout.Button(choice.Name, selected ? _branchSelectedNameStyle : _branchNameStyle, GUILayout.Height(24)))
+                    {
+                        nextSelected = !selected;
+                    }
+
                     if (nextSelected != selected)
                     {
                         if (nextSelected)
@@ -2423,9 +2446,7 @@ namespace DreamScripts.EditorTools
                         }
                     }
 
-                    GUILayout.Label(choice.LastUpdatedLabel, GUILayout.Width(BranchLastUpdateColumnWidth));
-                    GUILayout.Label(choice.LastAuthorLabel, GUILayout.Width(BranchAuthorColumnWidth));
-                    GUILayout.Label(choice.StatusLabel, GUILayout.Width(BranchStatusColumnWidth));
+                    DrawBranchMetadataColumns(choice);
                     EditorGUILayout.EndHorizontal();
                 }
 
@@ -2625,8 +2646,9 @@ namespace DreamScripts.EditorTools
                         continue;
                     }
 
+                    var rowIndex = visibleCount;
                     visibleCount++;
-                    DrawBranchRow(choice);
+                    DrawBranchRow(choice, rowIndex);
                 }
 
                 if (visibleCount == 0)
@@ -2637,27 +2659,18 @@ namespace DreamScripts.EditorTools
                 EditorGUILayout.EndScrollView();
             }
 
-            private void DrawBranchRow(BranchChoice choice)
+            private void DrawBranchRow(BranchChoice choice, int rowIndex)
             {
                 var selected = string.Equals(_selectedBranch, choice.Name, StringComparison.Ordinal);
-                var previousColor = GUI.backgroundColor;
-                if (selected)
-                {
-                    GUI.backgroundColor = new Color(0.55f, 0.72f, 1f);
-                }
-
-                EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Toggle(selected, choice.Name, GUI.skin.button, GUILayout.Height(26)))
+                EditorGUILayout.BeginHorizontal(GetBranchRowStyle(selected, rowIndex), GUILayout.Height(BranchRowHeight));
+                if (GUILayout.Button(choice.Name, selected ? _branchSelectedNameStyle : _branchNameStyle, GUILayout.Height(24)))
                 {
                     _selectedBranch = choice.Name;
                     _manualBranch = string.Empty;
                     _useManualBranch = false;
                 }
 
-                GUI.backgroundColor = previousColor;
-                GUILayout.Label(choice.LastUpdatedLabel, GUILayout.Width(BranchLastUpdateColumnWidth));
-                GUILayout.Label(choice.LastAuthorLabel, GUILayout.Width(BranchAuthorColumnWidth));
-                GUILayout.Label(choice.StatusLabel, GUILayout.Width(BranchStatusColumnWidth));
+                DrawBranchMetadataColumns(choice);
                 EditorGUILayout.EndHorizontal();
             }
 
@@ -2754,12 +2767,152 @@ namespace DreamScripts.EditorTools
 
         private static void DrawBranchColumnsHeader()
         {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Branch", EditorStyles.miniBoldLabel);
-            GUILayout.Label("Last update", EditorStyles.miniBoldLabel, GUILayout.Width(BranchLastUpdateColumnWidth));
-            GUILayout.Label("Who", EditorStyles.miniBoldLabel, GUILayout.Width(BranchAuthorColumnWidth));
-            GUILayout.Label("Status", EditorStyles.miniBoldLabel, GUILayout.Width(BranchStatusColumnWidth));
+            EnsureBranchStyles();
+            EditorGUILayout.BeginHorizontal(_branchHeaderStyle, GUILayout.Height(28));
+            EditorGUILayout.LabelField("Branch", _branchHeaderLabelStyle);
+            GUILayout.Label("Last update", _branchHeaderLabelStyle, GUILayout.Width(BranchLastUpdateColumnWidth));
+            GUILayout.Label("Who", _branchHeaderLabelStyle, GUILayout.Width(BranchAuthorColumnWidth));
+            GUILayout.Label("Status", _branchHeaderLabelStyle, GUILayout.Width(BranchStatusColumnWidth));
             EditorGUILayout.EndHorizontal();
+        }
+
+        private static GUIStyle GetBranchRowStyle(bool selected, int rowIndex)
+        {
+            EnsureBranchStyles();
+            if (selected)
+            {
+                return _branchSelectedRowStyle;
+            }
+
+            return rowIndex % 2 == 0 ? _branchEvenRowStyle : _branchOddRowStyle;
+        }
+
+        private static void DrawBranchMetadataColumns(BranchChoice choice)
+        {
+            GUILayout.Label(choice.LastUpdatedLabel, _branchMetaStyle, GUILayout.Width(BranchLastUpdateColumnWidth), GUILayout.Height(24));
+            GUILayout.Label(choice.LastAuthorLabel, _branchMetaStyle, GUILayout.Width(BranchAuthorColumnWidth), GUILayout.Height(24));
+            GUILayout.Label(choice.StatusLabel, GetBranchStatusStyle(choice), GUILayout.Width(BranchStatusColumnWidth), GUILayout.Height(22));
+        }
+
+        private static GUIStyle GetBranchStatusStyle(BranchChoice choice)
+        {
+            EnsureBranchStyles();
+            if (choice.IsCurrent && choice.ExistsRemote)
+            {
+                return _statusCurrentRemoteStyle;
+            }
+
+            if (choice.IsCurrent)
+            {
+                return _statusCurrentLocalStyle;
+            }
+
+            if (choice.ExistsLocal && choice.ExistsRemote)
+            {
+                return _statusLocalRemoteStyle;
+            }
+
+            return choice.ExistsRemote ? _statusRemoteOnlyStyle : _statusLocalOnlyStyle;
+        }
+
+        private static void EnsureBranchStyles()
+        {
+            var proSkin = EditorGUIUtility.isProSkin;
+            if (_branchStylesInitialized && _branchStylesProSkin == proSkin)
+            {
+                return;
+            }
+
+            _branchStylesInitialized = true;
+            _branchStylesProSkin = proSkin;
+
+            var headerBackground = proSkin ? new Color(0.15f, 0.18f, 0.22f) : new Color(0.78f, 0.84f, 0.91f);
+            var evenBackground = proSkin ? new Color(0.20f, 0.20f, 0.20f) : new Color(0.93f, 0.95f, 0.97f);
+            var oddBackground = proSkin ? new Color(0.17f, 0.17f, 0.17f) : new Color(0.88f, 0.91f, 0.94f);
+            var selectedBackground = proSkin ? new Color(0.12f, 0.30f, 0.50f) : new Color(0.54f, 0.72f, 0.95f);
+            var headerText = proSkin ? new Color(0.82f, 0.88f, 0.94f) : new Color(0.12f, 0.17f, 0.24f);
+            var text = proSkin ? new Color(0.88f, 0.90f, 0.92f) : new Color(0.10f, 0.13f, 0.18f);
+            var mutedText = proSkin ? new Color(0.72f, 0.76f, 0.80f) : new Color(0.28f, 0.34f, 0.42f);
+            var selectedText = Color.white;
+
+            _branchHeaderStyle = MakeBranchBoxStyle(headerBackground, new RectOffset(8, 8, 4, 4), new RectOffset(0, 0, 6, 2));
+            _branchEvenRowStyle = MakeBranchBoxStyle(evenBackground, new RectOffset(8, 8, 3, 3), new RectOffset(0, 0, 1, 1));
+            _branchOddRowStyle = MakeBranchBoxStyle(oddBackground, new RectOffset(8, 8, 3, 3), new RectOffset(0, 0, 1, 1));
+            _branchSelectedRowStyle = MakeBranchBoxStyle(selectedBackground, new RectOffset(8, 8, 3, 3), new RectOffset(0, 0, 1, 1));
+
+            _branchHeaderLabelStyle = MakeBranchLabelStyle(headerText, FontStyle.Bold, TextAnchor.MiddleLeft);
+            _branchNameStyle = MakeBranchButtonStyle(text, FontStyle.Bold);
+            _branchSelectedNameStyle = MakeBranchButtonStyle(selectedText, FontStyle.Bold);
+            _branchMetaStyle = MakeBranchLabelStyle(mutedText, FontStyle.Normal, TextAnchor.MiddleLeft);
+
+            _statusCurrentRemoteStyle = MakeStatusStyle(new Color(0.16f, 0.44f, 0.75f));
+            _statusCurrentLocalStyle = MakeStatusStyle(new Color(0.75f, 0.47f, 0.13f));
+            _statusLocalRemoteStyle = MakeStatusStyle(new Color(0.18f, 0.50f, 0.28f));
+            _statusRemoteOnlyStyle = MakeStatusStyle(new Color(0.25f, 0.35f, 0.47f));
+            _statusLocalOnlyStyle = MakeStatusStyle(new Color(0.43f, 0.43f, 0.45f));
+        }
+
+        private static GUIStyle MakeBranchBoxStyle(Color background, RectOffset padding, RectOffset margin)
+        {
+            var style = new GUIStyle(GUIStyle.none)
+            {
+                padding = padding,
+                margin = margin
+            };
+            style.normal.background = MakeTexture(background);
+            return style;
+        }
+
+        private static GUIStyle MakeBranchButtonStyle(Color textColor, FontStyle fontStyle)
+        {
+            var style = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                clipping = TextClipping.Ellipsis,
+                fontStyle = fontStyle,
+                padding = new RectOffset(0, 6, 0, 0)
+            };
+            style.normal.textColor = textColor;
+            style.hover.textColor = textColor;
+            style.active.textColor = textColor;
+            style.focused.textColor = textColor;
+            return style;
+        }
+
+        private static GUIStyle MakeBranchLabelStyle(Color textColor, FontStyle fontStyle, TextAnchor alignment)
+        {
+            var style = new GUIStyle(EditorStyles.label)
+            {
+                alignment = alignment,
+                clipping = TextClipping.Ellipsis,
+                fontStyle = fontStyle,
+                padding = new RectOffset(0, 4, 0, 0)
+            };
+            style.normal.textColor = textColor;
+            return style;
+        }
+
+        private static GUIStyle MakeStatusStyle(Color background)
+        {
+            var style = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                clipping = TextClipping.Clip,
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(8, 8, 0, 1)
+            };
+            style.normal.background = MakeTexture(background);
+            style.normal.textColor = Color.white;
+            return style;
+        }
+
+        private static Texture2D MakeTexture(Color color)
+        {
+            var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            texture.hideFlags = HideFlags.HideAndDontSave;
+            texture.SetPixel(0, 0, color);
+            texture.Apply();
+            return texture;
         }
 
         private readonly struct GitResult
