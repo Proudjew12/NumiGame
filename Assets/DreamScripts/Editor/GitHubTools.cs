@@ -17,6 +17,9 @@ namespace DreamScripts.EditorTools
         private const int DialogTextLimit = 4200;
         private const string MainBranch = "main";
         private const int CommitHistoryLimit = 30;
+        private const string GitHubToolsPath = "Assets/DreamScripts/Editor/GitHubTools.cs";
+        private const string GitHubTestsPath = "Assets/NumiDream/Tests/EditMode/GitHubToolsTests.cs";
+        private const string PackageManifestPath = "Packages/manifest.json";
 
         static GitHubTools()
         {
@@ -278,12 +281,6 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
-            if (!CreateSafetyCommitIfNeeded(out var createdSafetyCommit))
-            {
-                return;
-            }
-
-            var oldHead = RunGit("rev-parse HEAD").Output.Trim();
             var fetch = RunGit("fetch origin " + Quote(branch));
             if (!fetch.Success)
             {
@@ -299,6 +296,25 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
+            if (!RemoteKeepsRestoredDreamScripts(remoteRef, out var dreamScriptsCheck))
+            {
+                Show(
+                    "GitHub Pull/Import blocked",
+                    "This branch does not contain the restored DreamScripts GitHub tools.\n\n" +
+                    "Branch: " + branch + "\n" +
+                    "Time: " + NowStamp() + "\n\n" +
+                    "No files were imported. This prevents an old branch from undoing Push/Upload, Pull/Import, Repo, Merge, and tests again.\n\n" +
+                    "Ask the teammate to update their branch from the restored DreamScripts branch first, then import again.\n\n" +
+                    "Missing or outdated:\n" + dreamScriptsCheck);
+                return;
+            }
+
+            if (!CreateSafetyCommitIfNeeded(out var createdSafetyCommit))
+            {
+                return;
+            }
+
+            var oldHead = RunGit("rev-parse HEAD").Output.Trim();
             var remoteHeadHash = remoteHead.Output.Trim();
             var localOnlyCommits = RunGit("log --oneline " + Quote(remoteRef) + "..HEAD").Output.Trim();
             var incomingCommits = RunGit("log --oneline HEAD.." + Quote(remoteRef)).Output.Trim();
@@ -1136,6 +1152,63 @@ namespace DreamScripts.EditorTools
             return string.IsNullOrWhiteSpace(result) ? "branch" : result;
         }
 
+        private static bool RemoteKeepsRestoredDreamScripts(string revision, out string details)
+        {
+            var problems = new List<string>();
+
+            var gitHubTools = ReadFileAtRevision(revision, GitHubToolsPath);
+            if (string.IsNullOrWhiteSpace(gitHubTools))
+            {
+                problems.Add(GitHubToolsPath + " is missing.");
+            }
+            else
+            {
+                RequireMarker(gitHubTools, "GitHub/Push/Upload", GitHubToolsPath, problems);
+                RequireMarker(gitHubTools, "GitHub/Pull/Import", GitHubToolsPath, problems);
+                RequireMarker(gitHubTools, "GitHub/Repo/SetRepo", GitHubToolsPath, problems);
+                RequireMarker(gitHubTools, "GitHub/Merge/Branches Into Main", GitHubToolsPath, problems);
+            }
+
+            var manifest = ReadFileAtRevision(revision, PackageManifestPath);
+            if (string.IsNullOrWhiteSpace(manifest))
+            {
+                problems.Add(PackageManifestPath + " is missing.");
+            }
+            else
+            {
+                RequireMarker(manifest, "com.coplaydev.unity-mcp", PackageManifestPath, problems);
+                RequireMarker(manifest, "#v9.7.1", PackageManifestPath, problems);
+            }
+
+            var tests = ReadFileAtRevision(revision, GitHubTestsPath);
+            if (string.IsNullOrWhiteSpace(tests))
+            {
+                problems.Add(GitHubTestsPath + " is missing.");
+            }
+            else
+            {
+                RequireMarker(tests, "MergeBranchesIntoMainConflictRestoresMainAndDoesNotPush", GitHubTestsPath, problems);
+                RequireMarker(tests, "PullImportRejectsBranchWithoutRestoredDreamScripts", GitHubTestsPath, problems);
+            }
+
+            details = problems.Count == 0 ? "DreamScripts GitHub tooling is present." : string.Join("\n", problems.ToArray());
+            return problems.Count == 0;
+        }
+
+        private static string ReadFileAtRevision(string revision, string path)
+        {
+            var result = RunGit("show " + Quote(revision + ":" + path));
+            return result.Success ? result.Output : string.Empty;
+        }
+
+        private static void RequireMarker(string content, string marker, string path, List<string> problems)
+        {
+            if (content.IndexOf(marker, StringComparison.Ordinal) < 0)
+            {
+                problems.Add(path + " does not contain '" + marker + "'.");
+            }
+        }
+
         internal static bool TestCommitPendingChanges(string projectRoot, string commitMessage, out string changeSummary)
         {
             var localChangeSummary = string.Empty;
@@ -1189,6 +1262,11 @@ namespace DreamScripts.EditorTools
                     if (!verify.Success)
                     {
                         localResultMessage = verify.Combined;
+                        return false;
+                    }
+
+                    if (!RemoteKeepsRestoredDreamScripts(remoteRef, out localResultMessage))
+                    {
                         return false;
                     }
 
@@ -1350,6 +1428,20 @@ namespace DreamScripts.EditorTools
                     var remotes = RunGit("remote -v");
                     return status.Output.Trim() + "\n" + remotes.Output.Trim();
                 });
+        }
+
+        internal static bool TestRemoteKeepsRestoredDreamScripts(
+            string projectRoot,
+            string revision,
+            out string details)
+        {
+            var localDetails = string.Empty;
+            var success = WithTestProjectRoot(
+                projectRoot,
+                () => RemoteKeepsRestoredDreamScripts(revision, out localDetails));
+
+            details = localDetails;
+            return success;
         }
 
         internal static string TestNormalizeBranchInput(string branch)
