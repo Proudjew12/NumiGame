@@ -163,6 +163,23 @@ namespace NumiDream.Tests.EditMode
         }
 
         [Test]
+        public void PullImportRejectsBranchWithoutRestoredDreamScripts()
+        {
+            var repo = CreateRepoWithOrigin(includeRestoredDreamScripts: false);
+            CreateAndPushBranch(repo, "old/sound-upload", "old-sound.txt", "old branch\n", "Old sound upload");
+            Git(repo.WorkTree, "checkout main").AssertSuccess();
+
+            var guardArgs = new object[] { repo.WorkTree, "origin/old/sound-upload", null };
+            Assert.That((bool)Invoke("TestRemoteKeepsRestoredDreamScripts", guardArgs), Is.False);
+            Assert.That((string)guardArgs[2], Does.Contain("Assets/DreamScripts/Editor/GitHubTools.cs is missing"));
+
+            var importArgs = new object[] { repo.WorkTree, "old/sound-upload", null, null };
+            Assert.That((bool)Invoke("TestImportFromBranchNoDialogs", importArgs), Is.False);
+            Assert.That((string)importArgs[3], Does.Contain("GitHubTools.cs is missing"));
+            Assert.That(File.Exists(Path.Combine(repo.WorkTree, "old-sound.txt")), Is.False);
+        }
+
+        [Test]
         public void HistoryAndRepoStatusIncludeTimeBranchAndRemoteInformation()
         {
             var repo = CreateRepoWithOrigin();
@@ -233,7 +250,7 @@ namespace NumiDream.Tests.EditMode
             Assert.That((string)args[2], Does.StartWith("backup/test-main-before-merge-main-"));
         }
 
-        private TempRepo CreateRepoWithOrigin()
+        private TempRepo CreateRepoWithOrigin(bool includeRestoredDreamScripts = true)
         {
             var root = Path.Combine(Path.GetTempPath(), "NumiDreamGitHubToolsTests-" + Guid.NewGuid().ToString("N"));
             var workTree = Path.Combine(root, "work");
@@ -248,12 +265,38 @@ namespace NumiDream.Tests.EditMode
             Git(workTree, "config user.email tests@example.com").AssertSuccess();
             Git(workTree, "config user.name " + Quote("Test User")).AssertSuccess();
             File.WriteAllText(Path.Combine(workTree, "README.md"), "initial\n");
+            if (includeRestoredDreamScripts)
+            {
+                WriteRestoredDreamScriptsMarkers(workTree);
+            }
+
             Git(workTree, "add -A").AssertSuccess();
             Git(workTree, "commit -m " + Quote("Initial commit")).AssertSuccess();
             Git(workTree, "remote add origin " + Quote(origin)).AssertSuccess();
             Git(workTree, "push -u origin main").AssertSuccess();
 
             return new TempRepo(root, workTree, origin);
+        }
+
+        private static void WriteRestoredDreamScriptsMarkers(string workTree)
+        {
+            var gitHubToolsPath = Path.Combine(workTree, "Assets", "DreamScripts", "Editor", "GitHubTools.cs");
+            Directory.CreateDirectory(Path.GetDirectoryName(gitHubToolsPath));
+            File.WriteAllText(
+                gitHubToolsPath,
+                "GitHub/Push/Upload\nGitHub/Pull/Import\nGitHub/Repo/SetRepo\nGitHub/Merge/Branches Into Main\n");
+
+            var manifestPath = Path.Combine(workTree, "Packages", "manifest.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(manifestPath));
+            File.WriteAllText(
+                manifestPath,
+                "{\"dependencies\":{\"com.coplaydev.unity-mcp\":\"https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v9.7.1\"}}\n");
+
+            var testsPath = Path.Combine(workTree, "Assets", "NumiDream", "Tests", "EditMode", "GitHubToolsTests.cs");
+            Directory.CreateDirectory(Path.GetDirectoryName(testsPath));
+            File.WriteAllText(
+                testsPath,
+                "MergeBranchesIntoMainConflictRestoresMainAndDoesNotPush\nPullImportRejectsBranchWithoutRestoredDreamScripts\n");
         }
 
         private static void CreateAndPushBranch(TempRepo repo, string branch, string fileName, string content, string message)
