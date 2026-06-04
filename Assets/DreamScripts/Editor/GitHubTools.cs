@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEditor;
@@ -20,6 +21,9 @@ namespace DreamScripts.EditorTools
         private const string GitHubToolsPath = "Assets/DreamScripts/Editor/GitHubTools.cs";
         private const string GitHubTestsPath = "Assets/NumiDream/Tests/EditMode/GitHubToolsTests.cs";
         private const string PackageManifestPath = "Packages/manifest.json";
+        private const float BranchLastUpdateColumnWidth = 162f;
+        private const float BranchAuthorColumnWidth = 132f;
+        private const float BranchStatusColumnWidth = 128f;
 
         static GitHubTools()
         {
@@ -1139,6 +1143,19 @@ namespace DreamScripts.EditorTools
             return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         }
 
+        private static string FormatBranchLastUpdate(long unixSeconds)
+        {
+            try
+            {
+                var utc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
+                return utc.ToLocalTime().ToString("ddd yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return string.Empty;
+            }
+        }
+
         private static string MakeSafeBranchSegment(string value)
         {
             value = string.IsNullOrWhiteSpace(value) ? "branch" : value.Trim();
@@ -1427,6 +1444,27 @@ namespace DreamScripts.EditorTools
                     var status = RunGit("status -sb");
                     var remotes = RunGit("remote -v");
                     return status.Output.Trim() + "\n" + remotes.Output.Trim();
+                });
+        }
+
+        internal static string[] TestBranchChoiceRows(string projectRoot, string currentBranch, bool remoteOnly)
+        {
+            return WithTestProjectRoot(
+                projectRoot,
+                () =>
+                {
+                    var choices = GetBranchChoices(currentBranch, remoteOnly);
+                    var rows = new List<string>();
+                    foreach (var choice in choices)
+                    {
+                        rows.Add(
+                            choice.Name + "|" +
+                            choice.LastUpdatedLabel + "|" +
+                            choice.LastAuthorLabel + "|" +
+                            choice.StatusLabel);
+                    }
+
+                    return rows.ToArray();
                 });
         }
 
@@ -1756,6 +1794,40 @@ namespace DreamScripts.EditorTools
             choice.ExistsLocal = choice.ExistsLocal || existsLocal;
             choice.ExistsRemote = choice.ExistsRemote || existsRemote;
             choice.IsCurrent = string.Equals(branch, currentBranch, StringComparison.Ordinal);
+            choice.ConsiderLastCommit(ReadBranchLastCommit(existsRemote ? "origin/" + branch : branch));
+        }
+
+        private static BranchLastCommit ReadBranchLastCommit(string revision)
+        {
+            if (string.IsNullOrWhiteSpace(revision))
+            {
+                return default(BranchLastCommit);
+            }
+
+            var result = RunGit("log -1 --format=" + Quote("%ct%x09%an") + " " + Quote(revision));
+            if (!result.Success)
+            {
+                return default(BranchLastCommit);
+            }
+
+            var output = result.Output.TrimEnd('\r', '\n');
+            var separator = output.IndexOf('\t');
+            if (separator <= 0)
+            {
+                return default(BranchLastCommit);
+            }
+
+            if (!long.TryParse(output.Substring(0, separator), out var unixSeconds))
+            {
+                return default(BranchLastCommit);
+            }
+
+            return new BranchLastCommit
+            {
+                HasValue = true,
+                UnixSeconds = unixSeconds,
+                Author = output.Substring(separator + 1).Trim()
+            };
         }
 
         private static int CompareBranchChoices(BranchChoice a, BranchChoice b)
@@ -2120,6 +2192,10 @@ namespace DreamScripts.EditorTools
 
         private sealed class BranchChoice
         {
+            private long _lastCommitUnixSeconds = long.MinValue;
+            private string _lastAuthorLabel = string.Empty;
+            private string _lastUpdatedLabel = string.Empty;
+
             public BranchChoice(string name)
             {
                 Name = name;
@@ -2129,6 +2205,33 @@ namespace DreamScripts.EditorTools
             public bool ExistsLocal { get; set; }
             public bool ExistsRemote { get; set; }
             public bool IsCurrent { get; set; }
+
+            public string LastUpdatedLabel
+            {
+                get { return EmptyFallback(_lastUpdatedLabel, "unknown"); }
+            }
+
+            public string LastAuthorLabel
+            {
+                get { return EmptyFallback(_lastAuthorLabel, "unknown"); }
+            }
+
+            public void ConsiderLastCommit(BranchLastCommit lastCommit)
+            {
+                if (!lastCommit.HasValue)
+                {
+                    return;
+                }
+
+                if (_lastCommitUnixSeconds != long.MinValue && lastCommit.UnixSeconds < _lastCommitUnixSeconds)
+                {
+                    return;
+                }
+
+                _lastCommitUnixSeconds = lastCommit.UnixSeconds;
+                _lastUpdatedLabel = FormatBranchLastUpdate(lastCommit.UnixSeconds);
+                _lastAuthorLabel = lastCommit.Author;
+            }
 
             public string StatusLabel
             {
@@ -2152,6 +2255,13 @@ namespace DreamScripts.EditorTools
                     return ExistsRemote ? "GitHub" : "local only";
                 }
             }
+        }
+
+        private struct BranchLastCommit
+        {
+            public bool HasValue;
+            public long UnixSeconds;
+            public string Author;
         }
 
         private sealed class CommitMessageWindow : EditorWindow
@@ -2262,7 +2372,7 @@ namespace DreamScripts.EditorTools
                     window._choices.AddRange(choices);
                 }
 
-                window.minSize = new Vector2(560, 560);
+                window.minSize = new Vector2(820, 560);
                 window.ShowUtility();
                 window.Focus();
             }
@@ -2287,6 +2397,7 @@ namespace DreamScripts.EditorTools
 
                 EditorGUILayout.Space(4);
                 EditorGUILayout.LabelField("GitHub branches", EditorStyles.boldLabel);
+                DrawBranchColumnsHeader();
                 _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.MinHeight(300));
                 var visibleCount = 0;
                 foreach (var choice in _choices)
@@ -2312,7 +2423,9 @@ namespace DreamScripts.EditorTools
                         }
                     }
 
-                    GUILayout.Label(choice.StatusLabel, GUILayout.Width(128));
+                    GUILayout.Label(choice.LastUpdatedLabel, GUILayout.Width(BranchLastUpdateColumnWidth));
+                    GUILayout.Label(choice.LastAuthorLabel, GUILayout.Width(BranchAuthorColumnWidth));
+                    GUILayout.Label(choice.StatusLabel, GUILayout.Width(BranchStatusColumnWidth));
                     EditorGUILayout.EndHorizontal();
                 }
 
@@ -2364,6 +2477,8 @@ namespace DreamScripts.EditorTools
                 }
 
                 return choice.Name.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                       choice.LastUpdatedLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                       choice.LastAuthorLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
                        choice.StatusLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0;
             }
         }
@@ -2411,7 +2526,7 @@ namespace DreamScripts.EditorTools
                 }
 
                 window._selectedBranch = PickDefaultBranch(defaultBranch, window._choices);
-                window.minSize = new Vector2(520, 520);
+                window.minSize = new Vector2(820, 520);
                 window.ShowUtility();
                 window.Focus();
             }
@@ -2499,6 +2614,7 @@ namespace DreamScripts.EditorTools
             {
                 EditorGUILayout.Space(4);
                 EditorGUILayout.LabelField("Branches", EditorStyles.boldLabel);
+                DrawBranchColumnsHeader();
 
                 var visibleCount = 0;
                 _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.MinHeight(190));
@@ -2539,7 +2655,9 @@ namespace DreamScripts.EditorTools
                 }
 
                 GUI.backgroundColor = previousColor;
-                GUILayout.Label(choice.StatusLabel, GUILayout.Width(128));
+                GUILayout.Label(choice.LastUpdatedLabel, GUILayout.Width(BranchLastUpdateColumnWidth));
+                GUILayout.Label(choice.LastAuthorLabel, GUILayout.Width(BranchAuthorColumnWidth));
+                GUILayout.Label(choice.StatusLabel, GUILayout.Width(BranchStatusColumnWidth));
                 EditorGUILayout.EndHorizontal();
             }
 
@@ -2608,6 +2726,8 @@ namespace DreamScripts.EditorTools
                 }
 
                 return choice.Name.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                       choice.LastUpdatedLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                       choice.LastAuthorLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
                        choice.StatusLabel.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0;
             }
 
@@ -2630,6 +2750,16 @@ namespace DreamScripts.EditorTools
 
                 EditorApplication.delayCall += () => onSelected(branch);
             }
+        }
+
+        private static void DrawBranchColumnsHeader()
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Branch", EditorStyles.miniBoldLabel);
+            GUILayout.Label("Last update", EditorStyles.miniBoldLabel, GUILayout.Width(BranchLastUpdateColumnWidth));
+            GUILayout.Label("Who", EditorStyles.miniBoldLabel, GUILayout.Width(BranchAuthorColumnWidth));
+            GUILayout.Label("Status", EditorStyles.miniBoldLabel, GUILayout.Width(BranchStatusColumnWidth));
+            EditorGUILayout.EndHorizontal();
         }
 
         private readonly struct GitResult
