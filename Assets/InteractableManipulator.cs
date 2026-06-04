@@ -156,6 +156,8 @@ public class InteractableManipulator : MonoBehaviour
         }
     }
 
+    
+
     private void OnCollisionExit2D(Collision2D col)
     {
         if (col.gameObject.CompareTag("Player"))
@@ -163,4 +165,6 @@ public class InteractableManipulator : MonoBehaviour
             _rb.constraints = RigidbodyConstraints2D.None;
         }
     }
+
+
 }

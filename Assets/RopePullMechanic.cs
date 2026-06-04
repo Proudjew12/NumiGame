@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Cinemachine;
 
 public class RopePullMechanic : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class RopePullMechanic : MonoBehaviour
     [SerializeField] private SpriteOutline ropeOutline;
     [SerializeField] private Transform ropeTransform;
     [SerializeField] private Transform handsGround;
+    [SerializeField] private CinemachineCamera ropeCamera; // Assign in Inspector
 
     [Header("Targets")]
     [SerializeField] private float ropeTargetY = 3.13f;
@@ -22,6 +24,7 @@ public class RopePullMechanic : MonoBehaviour
     private Vector3 ropeCurrentTarget;
     private Vector3 handsCurrentTarget;
     private bool mechanicComplete = false;
+    private bool cameraActivated = false; // Track state to avoid setting priority every frame
 
     void Start()
     {
@@ -49,6 +52,26 @@ public class RopePullMechanic : MonoBehaviour
 
         handsGround.localPosition = Vector3.Lerp(
             handsGround.localPosition, handsCurrentTarget, Time.deltaTime * moveSpeed);
+
+        HandleCameraPriority();
+    }
+
+    private void HandleCameraPriority()
+    {
+        if (ropeCamera == null || ropeOutline == null) return;
+
+        bool shouldActivate = ropeOutline.currentOutlineSize > 0f;
+
+        if (shouldActivate && !cameraActivated)
+        {
+            ropeCamera.Priority = 5;
+            cameraActivated = true;
+        }
+        else if (!shouldActivate && cameraActivated)
+        {
+            ropeCamera.Priority = 0;
+            cameraActivated = false;
+        }
     }
 
     public void OnSpinDelta(float degrees)
@@ -65,11 +88,18 @@ public class RopePullMechanic : MonoBehaviour
         handsCurrentTarget = new Vector3(handsStartPos.x,
             Mathf.Lerp(handsStartPos.y, handsTargetY, progress), handsStartPos.z);
 
-        if (accumulatedDegrees >= totalDegreesRequired)
-        {
-            mechanicComplete = true;
-            Debug.Log("[RopePullMechanic] Puzzle complete!");
-        }
+       if (accumulatedDegrees >= totalDegreesRequired)
+{
+    mechanicComplete = true;
+    
+    if (ropeCamera != null)
+    {
+        ropeCamera.Priority = 0;
+        cameraActivated = false;
+    }
+    
+    Debug.Log("[RopePullMechanic] Puzzle complete!");
+}
     }
 
     public void ResetMechanic()
@@ -80,5 +110,11 @@ public class RopePullMechanic : MonoBehaviour
         handsCurrentTarget = handsStartPos;
         ropeTransform.localPosition = ropeStartPos;
         handsGround.localPosition = handsStartPos;
+
+        if (ropeCamera != null)
+        {
+            ropeCamera.Priority = 0;
+            cameraActivated = false;
+        }
     }
 }

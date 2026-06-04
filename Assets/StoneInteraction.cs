@@ -1,37 +1,75 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Collections.Generic;
 
 public class StoneInteraction : MonoBehaviour
 {
-    public GameObject popup;   // a world-space GameObject with a SpriteRenderer
+    public GameObject popup;
+    public InputAction interactAction;
+    public Transform player;
 
     private bool isPopupOpen = false;
     private SpriteOutline spriteOutline;
-    public InputAction interactAction;
+    private CanvasGroup canvasGroup;
+
+    private static List<StoneInteraction> allStones = new();
 
     void Awake()
     {
         spriteOutline = GetComponent<SpriteOutline>();
+
+        canvasGroup = popup.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = popup.AddComponent<CanvasGroup>();
+
         popup.SetActive(false);
     }
 
     void OnEnable()
     {
+        allStones.Add(this);
         interactAction.Enable();
         interactAction.performed += OnInteract;
     }
 
     void OnDisable()
     {
+        allStones.Remove(this);
         interactAction.performed -= OnInteract;
         interactAction.Disable();
     }
 
     private void OnInteract(InputAction.CallbackContext ctx)
     {
+        // Must have an outline active
         if (spriteOutline == null || spriteOutline.currentOutlineSize <= 0f) return;
+
+        // Must be the closest outlined stone to the player
+        StoneInteraction closest = GetClosestOutlinedStone();
+        if (closest != this) return;
+
         TogglePopup();
+    }
+
+    private StoneInteraction GetClosestOutlinedStone()
+    {
+        StoneInteraction nearest = null;
+        float minDist = float.MaxValue;
+
+        foreach (var stone in allStones)
+        {
+            if (stone.spriteOutline == null || stone.spriteOutline.currentOutlineSize <= 0f) continue;
+
+            float dist = Vector2.Distance(player.position, stone.transform.position);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                nearest = stone;
+            }
+        }
+
+        return nearest;
     }
 
     void TogglePopup()
@@ -57,36 +95,31 @@ public class StoneInteraction : MonoBehaviour
 
     IEnumerator AnimateIn()
     {
-        SpriteRenderer sr = popup.GetComponent<SpriteRenderer>();
+        canvasGroup.alpha = 0f;
         popup.transform.localScale = Vector3.one * 0.8f;
-        Color c = sr.color;
-        c.a = 0f;
-        sr.color = c;
 
         float t = 0f;
         while (t < 1f)
         {
             t += Time.unscaledDeltaTime / 0.2f;
             float s = Mathf.SmoothStep(0f, 1f, t);
-            c.a = s;
-            sr.color = c;
+            canvasGroup.alpha = s;
             popup.transform.localScale = Vector3.Lerp(Vector3.one * 0.8f, Vector3.one, s);
             yield return null;
         }
+
+        canvasGroup.alpha = 1f;
+        popup.transform.localScale = Vector3.one;
     }
 
     IEnumerator AnimateOut()
     {
-        SpriteRenderer sr = popup.GetComponent<SpriteRenderer>();
-        Color c = sr.color;
-
         float t = 0f;
         while (t < 1f)
         {
             t += Time.unscaledDeltaTime / 0.15f;
             float s = Mathf.SmoothStep(0f, 1f, t);
-            c.a = 1f - s;
-            sr.color = c;
+            canvasGroup.alpha = 1f - s;
             popup.transform.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 0.8f, s);
             yield return null;
         }
