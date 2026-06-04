@@ -196,6 +196,21 @@ namespace NumiDream.Tests.EditMode
         }
 
         [Test]
+        public void BranchPickerRowsIncludeLastUpdateTimeAndAuthor()
+        {
+            var repo = CreateRepoWithOrigin();
+            CreateAndPushBranch(repo, "history/scene-one", "history-row.txt", "history row\n", "History row");
+
+            var rows = Invoke<string[]>("TestBranchChoiceRows", repo.WorkTree, "main", false);
+            var row = rows.FirstOrDefault(value => value.StartsWith("history/scene-one|", StringComparison.Ordinal));
+
+            Assert.That(row, Is.Not.Null);
+            Assert.That(row, Does.Match(@"[A-Z][a-z]{2} \d{4}-\d{2}-\d{2} \d{2}:\d{2}"));
+            Assert.That(row, Does.Contain("|Test User|"));
+            Assert.That(row, Does.Contain("local + GitHub"));
+        }
+
+        [Test]
         public void MergeBranchIntoCurrentCreatesBackupAndMergesBranch()
         {
             var repo = CreateRepoWithOrigin();
