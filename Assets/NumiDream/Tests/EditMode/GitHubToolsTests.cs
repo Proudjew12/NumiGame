@@ -73,6 +73,7 @@ namespace NumiDream.Tests.EditMode
             Assert.That(paths, Does.Contain("GitHub/Repo/Status"));
             Assert.That(paths, Does.Contain("GitHub/Repo/SetRepo"));
             Assert.That(paths, Does.Contain("GitHub/Repo/EnterRepo"));
+            Assert.That(paths, Does.Contain("GitHub/Repo/Refresh Branches"));
         }
 
         [Test]
@@ -88,6 +89,7 @@ namespace NumiDream.Tests.EditMode
             Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/Pull/Import"));
             Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/Repo/SetRepo"));
             Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/Repo/EnterRepo"));
+            Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/Repo/Refresh Branches"));
             Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/Commit/Write Commit"));
             Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/History/Branch History"));
             Assert.That(menuPaths, Does.Contain("DreamScripts/GitHub/Merge/Branch Into Current"));
@@ -209,6 +211,18 @@ namespace NumiDream.Tests.EditMode
             Assert.That(row, Does.Match(@"\d{1,2}/\d{1,2}/\d{4}"));
             Assert.That(row, Does.Contain("|Test User|"));
             Assert.That(row, Does.Contain("local + GitHub"));
+        }
+
+        [Test]
+        public void BranchPickerUsesBatchedMetadataAndDoesNotFetchBeforeOpening()
+        {
+            var source = File.ReadAllText("Assets/DreamScripts/Editor/GitHubTools.cs");
+
+            Assert.That(source, Does.Contain("for-each-ref --format="));
+            Assert.That(source, Does.Contain("%(committerdate:unix)"));
+            Assert.That(source, Does.Contain("ReadBranchRefs"));
+            Assert.That(source, Does.Not.Contain("ReadBranchLastCommit"));
+            Assert.That(source, Does.Not.Contain("RefreshOriginBranchList"));
         }
 
         [Test]

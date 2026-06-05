@@ -53,6 +53,7 @@ namespace DreamScripts.EditorTools
             DreamScriptRegistry.Register("GitHub/Repo/Status", ShowRepoStatus, priority: 28);
             DreamScriptRegistry.Register("GitHub/Repo/SetRepo", SetRepo, priority: 29);
             DreamScriptRegistry.Register("GitHub/Repo/EnterRepo", EnterRepo, priority: 30);
+            DreamScriptRegistry.Register("GitHub/Repo/Refresh Branches", RefreshBranchCache, priority: 31);
         }
 
         [MenuItem(RootPath + "/Push/Upload", false, RootMenuPriorityBase)]
@@ -70,7 +71,6 @@ namespace DreamScripts.EditorTools
                 return;
             }
 
-            var branchListWarning = RefreshOriginBranchList(blockOnFailure: false);
             var choices = GetBranchChoices(currentBranch, remoteOnly: false);
             BranchPickerWindow.Open(
                 "GitHub Push/Upload",
@@ -80,7 +80,7 @@ namespace DreamScripts.EditorTools
                 currentBranch,
                 choices,
                 allowManualBranch: true,
-                warning: branchListWarning,
+                warning: string.Empty,
                 onSelected: UploadToBranch);
         }
 
@@ -255,12 +255,6 @@ namespace DreamScripts.EditorTools
             if (string.IsNullOrWhiteSpace(currentBranch))
             {
                 Show("GitHub Pull/Import blocked", "Could not detect the current Git branch.");
-                return;
-            }
-
-            var branchListWarning = RefreshOriginBranchList(blockOnFailure: true);
-            if (!string.IsNullOrWhiteSpace(branchListWarning))
-            {
                 return;
             }
 
@@ -594,7 +588,6 @@ namespace DreamScripts.EditorTools
             }
 
             var currentBranch = GetCurrentBranch();
-            var branchListWarning = EnsureOriginRemote() ? RefreshOriginBranchList(blockOnFailure: false) : string.Empty;
             var choices = GetBranchChoices(currentBranch, remoteOnly: false);
 
             BranchPickerWindow.Open(
@@ -605,7 +598,7 @@ namespace DreamScripts.EditorTools
                 currentBranch,
                 choices,
                 allowManualBranch: false,
-                warning: branchListWarning,
+                warning: string.Empty,
                 onSelected: ShowHistoryForBranch);
         }
 
@@ -664,6 +657,30 @@ namespace DreamScripts.EditorTools
             Show("GitHub Repo Status", message);
         }
 
+        [MenuItem(RootPath + "/Repo/Refresh Branches", false, RootMenuPriorityBase + 10)]
+        private static void RefreshBranchCache()
+        {
+            if (!EnsureGitRepository() || !EnsureOriginRemote())
+            {
+                return;
+            }
+
+            EditorUtility.DisplayProgressBar("GitHub Branches", "Refreshing GitHub branch cache...", 0.45f);
+            var fetch = RunGit("fetch origin --prune");
+            EditorUtility.ClearProgressBar();
+
+            if (!fetch.Success)
+            {
+                ShowGitFailure("GitHub Branch Refresh failed", "Git could not refresh branches from GitHub.", fetch);
+                return;
+            }
+
+            Show(
+                "GitHub Branches refreshed",
+                "The local GitHub branch cache is updated.\n\n" +
+                "Pull/Import, History, and Merge now open from the cached branch list without waiting on GitHub.");
+        }
+
         [MenuItem(RootPath + "/Merge/Branch Into Current", false, RootMenuPriorityBase + 7)]
         private static void MergeBranchIntoCurrent()
         {
@@ -676,12 +693,6 @@ namespace DreamScripts.EditorTools
             if (string.IsNullOrWhiteSpace(currentBranch))
             {
                 Show("GitHub Merge blocked", "Could not detect the current Git branch.");
-                return;
-            }
-
-            var branchListWarning = RefreshOriginBranchList(blockOnFailure: true);
-            if (!string.IsNullOrWhiteSpace(branchListWarning))
-            {
                 return;
             }
 
@@ -707,12 +718,6 @@ namespace DreamScripts.EditorTools
             }
 
             var currentBranch = GetCurrentBranch();
-            var branchListWarning = RefreshOriginBranchList(blockOnFailure: true);
-            if (!string.IsNullOrWhiteSpace(branchListWarning))
-            {
-                return;
-            }
-
             var choices = GetBranchChoices(currentBranch, remoteOnly: true);
             choices.RemoveAll(choice => string.Equals(choice.Name, MainBranch, StringComparison.Ordinal));
             MultiBranchPickerWindow.Open(
@@ -1624,26 +1629,6 @@ namespace DreamScripts.EditorTools
             return false;
         }
 
-        private static string RefreshOriginBranchList(bool blockOnFailure)
-        {
-            var fetch = RunGit("fetch origin --prune");
-            if (fetch.Success)
-            {
-                return string.Empty;
-            }
-
-            if (blockOnFailure)
-            {
-                ShowGitFailure(
-                    "GitHub Pull/Import failed",
-                    "Git could not refresh the GitHub branch list before pull/import.",
-                    fetch);
-                return "blocked";
-            }
-
-            return "Could not refresh the GitHub branch list. Showing locally known branches.\n\n" + Clip(fetch.Combined);
-        }
-
         private static GitResult PushToRemoteBranch(string targetBranch, string currentBranch, bool forceWithLease)
         {
             var upstreamFlag = string.Equals(targetBranch, currentBranch, StringComparison.Ordinal)
@@ -1736,20 +1721,38 @@ namespace DreamScripts.EditorTools
         {
             var byName = new Dictionary<string, BranchChoice>(StringComparer.Ordinal);
 
-            foreach (var branch in ReadBranchNames("for-each-ref --format=%(refname:short) refs/heads"))
+            foreach (var branchRef in ReadBranchRefs("refs/heads"))
             {
-                AddBranchChoice(byName, branch, existsLocal: true, existsRemote: false, currentBranch: currentBranch);
+                AddBranchChoice(
+                    byName,
+                    branchRef.Name,
+                    existsLocal: true,
+                    existsRemote: false,
+                    currentBranch: currentBranch,
+                    lastCommit: branchRef.LastCommit);
             }
 
-            foreach (var branch in ReadBranchNames("for-each-ref --format=%(refname:short) refs/remotes/origin"))
+            foreach (var branchRef in ReadBranchRefs("refs/remotes/origin"))
             {
-                var normalized = NormalizeRemoteBranchName(branch);
-                AddBranchChoice(byName, normalized, existsLocal: false, existsRemote: true, currentBranch: currentBranch);
+                var normalized = NormalizeRemoteBranchName(branchRef.Name);
+                AddBranchChoice(
+                    byName,
+                    normalized,
+                    existsLocal: false,
+                    existsRemote: true,
+                    currentBranch: currentBranch,
+                    lastCommit: branchRef.LastCommit);
             }
 
             if (!remoteOnly)
             {
-                AddBranchChoice(byName, currentBranch, existsLocal: true, existsRemote: false, currentBranch: currentBranch);
+                AddBranchChoice(
+                    byName,
+                    currentBranch,
+                    existsLocal: true,
+                    existsRemote: false,
+                    currentBranch: currentBranch,
+                    lastCommit: default(BranchLastCommit));
             }
 
             var choices = new List<BranchChoice>();
@@ -1767,10 +1770,12 @@ namespace DreamScripts.EditorTools
             return choices;
         }
 
-        private static List<string> ReadBranchNames(string gitArguments)
+        private static List<BranchRef> ReadBranchRefs(string refScope)
         {
-            var result = RunGit(gitArguments);
-            var branches = new List<string>();
+            var result = RunGit(
+                "for-each-ref --format=" + Quote("%(refname:short)%09%(committerdate:unix)%09%(authorname)") +
+                " " + Quote(refScope));
+            var branches = new List<BranchRef>();
             if (!result.Success || string.IsNullOrWhiteSpace(result.Output))
             {
                 return branches;
@@ -1779,14 +1784,58 @@ namespace DreamScripts.EditorTools
             var lines = result.Output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
             {
-                var branch = line.Trim();
-                if (!string.IsNullOrWhiteSpace(branch))
+                if (TryReadBranchRef(line, out var branchRef))
                 {
-                    branches.Add(branch);
+                    branches.Add(branchRef);
                 }
             }
 
             return branches;
+        }
+
+        private static bool TryReadBranchRef(string line, out BranchRef branchRef)
+        {
+            branchRef = default(BranchRef);
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return false;
+            }
+
+            var firstSeparator = line.IndexOf('\t');
+            if (firstSeparator <= 0)
+            {
+                return false;
+            }
+
+            var secondSeparator = line.IndexOf('\t', firstSeparator + 1);
+            if (secondSeparator <= firstSeparator)
+            {
+                return false;
+            }
+
+            var name = line.Substring(0, firstSeparator).Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            var lastCommit = default(BranchLastCommit);
+            if (long.TryParse(line.Substring(firstSeparator + 1, secondSeparator - firstSeparator - 1), out var unixSeconds))
+            {
+                lastCommit = new BranchLastCommit
+                {
+                    HasValue = true,
+                    UnixSeconds = unixSeconds,
+                    Author = line.Substring(secondSeparator + 1).Trim()
+                };
+            }
+
+            branchRef = new BranchRef
+            {
+                Name = name,
+                LastCommit = lastCommit
+            };
+            return true;
         }
 
         private static void AddBranchChoice(
@@ -1794,7 +1843,8 @@ namespace DreamScripts.EditorTools
             string branch,
             bool existsLocal,
             bool existsRemote,
-            string currentBranch)
+            string currentBranch,
+            BranchLastCommit lastCommit)
         {
             branch = NormalizeBranchInput(branch);
             if (string.IsNullOrWhiteSpace(branch) || string.Equals(branch, "HEAD", StringComparison.Ordinal))
@@ -1811,40 +1861,7 @@ namespace DreamScripts.EditorTools
             choice.ExistsLocal = choice.ExistsLocal || existsLocal;
             choice.ExistsRemote = choice.ExistsRemote || existsRemote;
             choice.IsCurrent = string.Equals(branch, currentBranch, StringComparison.Ordinal);
-            choice.ConsiderLastCommit(ReadBranchLastCommit(existsRemote ? "origin/" + branch : branch));
-        }
-
-        private static BranchLastCommit ReadBranchLastCommit(string revision)
-        {
-            if (string.IsNullOrWhiteSpace(revision))
-            {
-                return default(BranchLastCommit);
-            }
-
-            var result = RunGit("log -1 --format=" + Quote("%ct%x09%an") + " " + Quote(revision));
-            if (!result.Success)
-            {
-                return default(BranchLastCommit);
-            }
-
-            var output = result.Output.TrimEnd('\r', '\n');
-            var separator = output.IndexOf('\t');
-            if (separator <= 0)
-            {
-                return default(BranchLastCommit);
-            }
-
-            if (!long.TryParse(output.Substring(0, separator), out var unixSeconds))
-            {
-                return default(BranchLastCommit);
-            }
-
-            return new BranchLastCommit
-            {
-                HasValue = true,
-                UnixSeconds = unixSeconds,
-                Author = output.Substring(separator + 1).Trim()
-            };
+            choice.ConsiderLastCommit(lastCommit);
         }
 
         private static int CompareBranchChoices(BranchChoice a, BranchChoice b)
@@ -2279,6 +2296,12 @@ namespace DreamScripts.EditorTools
             public bool HasValue;
             public long UnixSeconds;
             public string Author;
+        }
+
+        private struct BranchRef
+        {
+            public string Name;
+            public BranchLastCommit LastCommit;
         }
 
         private sealed class CommitMessageWindow : EditorWindow
