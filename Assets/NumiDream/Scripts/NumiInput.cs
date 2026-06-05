@@ -2,6 +2,7 @@ using UnityEngine;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 #endif
 
 namespace NumiDream.Input
@@ -9,6 +10,16 @@ namespace NumiDream.Input
     public static class NumiInput
     {
         public const float DefaultDeadZone = 0.18f;
+        public const float EightBitDoAxisPressThreshold = 0.55f;
+
+        private const float EightBitDoAxisReleaseThreshold = 0.22f;
+
+#if ENABLE_INPUT_SYSTEM
+        private static bool s_eightBitDoRightTriggerAxisPressed;
+        private static bool s_eightBitDoLeftTriggerAxisPressed;
+        private static int s_eightBitDoRightTriggerAxisPressedFrame = -1;
+        private static int s_eightBitDoLeftTriggerAxisPressedFrame = -1;
+#endif
 
         public static float ReadHorizontal(float deadZone = DefaultDeadZone)
         {
@@ -87,7 +98,9 @@ namespace NumiDream.Input
             }
 
             var joystick = Joystick.current;
-            if (joystick != null && joystick.trigger.wasPressedThisFrame)
+            if (joystick != null &&
+                (joystick.trigger.wasPressedThisFrame ||
+                 WasNamedButtonPressed(joystick, "Y")))
             {
                 return true;
             }
@@ -124,7 +137,9 @@ namespace NumiDream.Input
             }
 
             var joystick = Joystick.current;
-            if (joystick != null && joystick.trigger.isPressed)
+            if (joystick != null &&
+                (joystick.trigger.isPressed ||
+                 IsNamedButtonHeld(joystick, "Y")))
             {
                 return true;
             }
@@ -161,7 +176,9 @@ namespace NumiDream.Input
             }
 
             var joystick = Joystick.current;
-            if (joystick != null && joystick.trigger.wasReleasedThisFrame)
+            if (joystick != null &&
+                (joystick.trigger.wasReleasedThisFrame ||
+                 WasNamedButtonReleased(joystick, "Y")))
             {
                 return true;
             }
@@ -196,7 +213,10 @@ namespace NumiDream.Input
             }
 
             var joystick = Joystick.current;
-            if (joystick != null && joystick.trigger.wasPressedThisFrame)
+            if (joystick != null &&
+                (joystick.trigger.wasPressedThisFrame ||
+                 Was8BitDoRightActionPressed(joystick) ||
+                 Was8BitDoLeftActionPressed(joystick)))
             {
                 return true;
             }
@@ -228,7 +248,10 @@ namespace NumiDream.Input
             }
 
             var joystick = Joystick.current;
-            if (joystick != null && joystick.trigger.isPressed)
+            if (joystick != null &&
+                (joystick.trigger.isPressed ||
+                 Is8BitDoRightActionHeld(joystick) ||
+                 Is8BitDoLeftActionHeld(joystick)))
             {
                 return true;
             }
@@ -240,6 +263,171 @@ namespace NumiDream.Input
             return false;
 #endif
         }
+
+        public static bool WasInteractPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.eKey.wasPressedThisFrame)
+            {
+                return true;
+            }
+
+            var gamepad = Gamepad.current;
+            if (gamepad != null &&
+                (gamepad.buttonNorth.wasPressedThisFrame ||
+                 gamepad.rightShoulder.wasPressedThisFrame ||
+                 gamepad.rightTrigger.wasPressedThisFrame))
+            {
+                return true;
+            }
+
+            var joystick = Joystick.current;
+            if (joystick != null &&
+                (joystick.trigger.wasPressedThisFrame ||
+                 Was8BitDoRightActionPressed(joystick)))
+            {
+                return true;
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return UnityEngine.Input.GetKeyDown(KeyCode.E);
+#else
+            return false;
+#endif
+        }
+
+        public static float ReadScaleInput()
+        {
+            var scaleInput = 0f;
+
+#if ENABLE_INPUT_SYSTEM
+            var joystick = Joystick.current;
+            if (joystick != null)
+            {
+                if (Is8BitDoRightActionHeld(joystick))
+                {
+                    scaleInput += 1f;
+                }
+
+                if (Is8BitDoLeftActionHeld(joystick))
+                {
+                    scaleInput -= 1f;
+                }
+            }
+#endif
+
+            return Mathf.Clamp(scaleInput, -1f, 1f);
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        private static bool Was8BitDoRightActionPressed(Joystick joystick)
+        {
+            return WasNamedButtonPressed(joystick, "TriggerRight") ||
+                   WasNamedButtonPressed(joystick, "Start") ||
+                   WasFilteredAxisPressed(
+                       joystick,
+                       "RotateZ",
+                       ref s_eightBitDoRightTriggerAxisPressed,
+                       ref s_eightBitDoRightTriggerAxisPressedFrame,
+                       blockWhenSelectHeld: true);
+        }
+
+        private static bool Is8BitDoRightActionHeld(Joystick joystick)
+        {
+            return IsNamedButtonHeld(joystick, "TriggerRight") ||
+                   IsNamedButtonHeld(joystick, "Start") ||
+                   IsFilteredAxisHeld(joystick, "RotateZ", blockWhenSelectHeld: true);
+        }
+
+        private static bool Was8BitDoLeftActionPressed(Joystick joystick)
+        {
+            return WasNamedButtonPressed(joystick, "TriggerLeft2") ||
+                   WasNamedButtonPressed(joystick, "Select") ||
+                   WasFilteredAxisPressed(
+                       joystick,
+                       "Z",
+                       ref s_eightBitDoLeftTriggerAxisPressed,
+                       ref s_eightBitDoLeftTriggerAxisPressedFrame,
+                       blockWhenSelectHeld: false);
+        }
+
+        private static bool Is8BitDoLeftActionHeld(Joystick joystick)
+        {
+            return IsNamedButtonHeld(joystick, "TriggerLeft2") ||
+                   IsNamedButtonHeld(joystick, "Select") ||
+                   IsFilteredAxisHeld(joystick, "Z", blockWhenSelectHeld: false);
+        }
+
+        private static bool WasNamedButtonPressed(InputDevice device, string controlName)
+        {
+            var button = device.TryGetChildControl<ButtonControl>(controlName);
+            return button != null && button.wasPressedThisFrame;
+        }
+
+        private static bool IsNamedButtonHeld(InputDevice device, string controlName)
+        {
+            var button = device.TryGetChildControl<ButtonControl>(controlName);
+            return button != null && button.isPressed;
+        }
+
+        private static bool WasNamedButtonReleased(InputDevice device, string controlName)
+        {
+            var button = device.TryGetChildControl<ButtonControl>(controlName);
+            return button != null && button.wasReleasedThisFrame;
+        }
+
+        private static bool WasFilteredAxisPressed(
+            Joystick joystick,
+            string controlName,
+            ref bool wasPressed,
+            ref int pressedFrame,
+            bool blockWhenSelectHeld)
+        {
+            if (blockWhenSelectHeld && IsNamedButtonHeld(joystick, "Select"))
+            {
+                wasPressed = false;
+                pressedFrame = -1;
+                return false;
+            }
+
+            var isHeld = IsNamedAxisHeld(joystick, controlName, wasPressed);
+            if (!isHeld)
+            {
+                wasPressed = false;
+                pressedFrame = -1;
+                return false;
+            }
+
+            if (wasPressed)
+            {
+                return pressedFrame == Time.frameCount;
+            }
+
+            wasPressed = true;
+            pressedFrame = Time.frameCount;
+            return true;
+        }
+
+        private static bool IsFilteredAxisHeld(Joystick joystick, string controlName, bool blockWhenSelectHeld)
+        {
+            return (!blockWhenSelectHeld || !IsNamedButtonHeld(joystick, "Select")) &&
+                   IsNamedAxisHeld(joystick, controlName, alreadyPressed: true);
+        }
+
+        private static bool IsNamedAxisHeld(InputDevice device, string controlName, bool alreadyPressed)
+        {
+            var axis = device.TryGetChildControl<AxisControl>(controlName);
+            if (axis == null)
+            {
+                return false;
+            }
+
+            var value = Mathf.Abs(axis.ReadValue());
+            return value >= (alreadyPressed ? EightBitDoAxisReleaseThreshold : EightBitDoAxisPressThreshold);
+        }
+#endif
 
         private static float ApplyDeadZone(float value, float deadZone)
         {

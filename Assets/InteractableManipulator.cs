@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using System.Collections;
+using NumiDream.Input;
 
 public class InteractableManipulator : MonoBehaviour
 {
@@ -90,6 +91,8 @@ public class InteractableManipulator : MonoBehaviour
 
         if (scaleDownAction != null && scaleDownAction.action.IsPressed())
             scaleDelta -= scaleSpeed * Time.deltaTime;
+
+        scaleDelta += NumiInput.ReadScaleInput() * scaleSpeed * Time.deltaTime;
 
         if (scaleDelta != 0f)
         {

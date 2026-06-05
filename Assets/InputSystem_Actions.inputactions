@@ -240,6 +240,28 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "8BitDo Ultimate 2C / X",
+                    "id": "a6a7191e-2177-4e7d-be6d-dcf491d1b2e2",
+                    "path": "<Joystick>/TriggerRight",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "ScaleUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / RB",
+                    "id": "d4a51bde-2594-404c-a8d4-d23dd71fd098",
+                    "path": "<Joystick>/Start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "ScaleUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "",
                     "id": "11c7c9ce-6d2a-4989-92d1-c6e8cbcdd364",
                     "path": "<Keyboard>/q",
@@ -279,6 +301,28 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
+                    "action": "ScaleDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / Y",
+                    "id": "49b63eb5-442d-4f36-a85f-4c275f2b2205",
+                    "path": "<Joystick>/TriggerLeft2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "ScaleDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / LB",
+                    "id": "14c0fdf7-64e0-41ec-a72b-4b42c958e3ef",
+                    "path": "<Joystick>/Select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
                     "action": "ScaleDown",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -394,6 +438,17 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "8BitDo Ultimate 2C / A",
+                    "id": "ef8f9efa-559e-49d3-bbc2-09343514d3ce",
+                    "path": "<Joystick>/Y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "",
                     "id": "1534dc16-a6aa-499d-9c3a-22b47347b52a",
                     "path": "<Keyboard>/1",
@@ -471,6 +526,28 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "8BitDo Ultimate 2C / X",
+                    "id": "9a03b163-934d-4d17-958d-047ac49426b1",
+                    "path": "<Joystick>/TriggerRight",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / RB",
+                    "id": "5e1c647a-9d0d-4165-8dd2-7eecaf6a52d6",
+                    "path": "<Joystick>/Start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "",
                     "id": "522e47ae-91ef-4593-b726-fa9a61a56591",
                     "path": "<Keyboard>/q",
@@ -496,6 +573,39 @@
                     "name": "8BitDo / Generic Joystick",
                     "id": "0ae8c9f2-1bc5-4989-bc77-2e5328b613c2",
                     "path": "<Joystick>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "do",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / X",
+                    "id": "6cd0cdfc-0591-44c2-8b9f-c6682150bef8",
+                    "path": "<Joystick>/TriggerRight",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "do",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / RB",
+                    "id": "9463c427-15f6-4c5f-ad4f-5abb1f38bdd2",
+                    "path": "<Joystick>/Start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "do",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo Ultimate 2C / Y",
+                    "id": "c6d2261e-5bb3-44f1-97e3-1993313ec0a1",
+                    "path": "<Joystick>/TriggerLeft2",
                     "interactions": "",
                     "processors": "",
                     "groups": "Joystick",
