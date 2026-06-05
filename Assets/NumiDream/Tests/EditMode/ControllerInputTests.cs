@@ -1,5 +1,8 @@
+using System.Linq;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace NumiDream.Tests.EditMode
@@ -24,6 +27,36 @@ namespace NumiDream.Tests.EditMode
             StringAssert.Contains("\"path\": \"<Gamepad>/rightTrigger\"", actionsJson);
             StringAssert.Contains("\"path\": \"<Gamepad>/leftShoulder\"", actionsJson);
             StringAssert.Contains("\"path\": \"<Gamepad>/leftTrigger\"", actionsJson);
+        }
+
+        [Test]
+        public void ControllerInputMonitorRuntimeTypeIsLoadable()
+        {
+            var monitorType = System.Type.GetType("NumiDream.DebugTools.ControllerInputMonitor, Assembly-CSharp");
+
+            Assert.That(monitorType, Is.Not.Null);
+            Assert.That(
+                monitorType.GetField("EnabledPlayerPrefsKey", BindingFlags.Public | BindingFlags.Static).GetRawConstantValue(),
+                Is.EqualTo("NumiDream.ControllerInputMonitor.Enabled"));
+            Assert.That(monitorType.GetMethod("EnsureExists", BindingFlags.Public | BindingFlags.Static), Is.Not.Null);
+        }
+
+        [Test]
+        public void ControllerInputMonitorMenuItemsExist()
+        {
+            var toolsType = System.Type.GetType("DreamScripts.EditorTools.ControllerInputMonitorTools, Assembly-CSharp-Editor");
+
+            Assert.That(toolsType, Is.Not.Null);
+
+            var menuPaths = toolsType
+                .GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+                .SelectMany(method => method.GetCustomAttributes(typeof(MenuItem), inherit: false))
+                .Select(attribute => (string)attribute.GetType().GetField("menuItem").GetValue(attribute))
+                .ToArray();
+
+            Assert.That(menuPaths, Does.Contain("DreamScripts/Project/Controller Input Monitor/Enable"));
+            Assert.That(menuPaths, Does.Contain("DreamScripts/Project/Controller Input Monitor/Disable"));
+            Assert.That(menuPaths, Does.Contain("DreamScripts/Project/Controller Input Monitor/Status"));
         }
     }
 }
