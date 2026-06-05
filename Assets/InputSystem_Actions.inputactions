@@ -759,6 +759,263 @@
             ]
         },
         {
+            "name": "8BitDo Raw Controls",
+            "id": "a9203cb0-1210-5330-ba9c-41d25415bdb1",
+            "actions": [
+                {
+                    "name": "Move Stick",
+                    "type": "PassThrough",
+                    "id": "6b9e71e8-3522-55f1-9735-d52801078a1b",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Hatswitch Dpad",
+                    "type": "PassThrough",
+                    "id": "076858f4-e1be-52cc-9f22-e29a82bafe17",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "A",
+                    "type": "Button",
+                    "id": "c8c929f4-b234-51ac-9167-a20dc5f05765",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "B - Unmapped",
+                    "type": "Button",
+                    "id": "44f92ea0-1c7c-5533-9a51-4ab10b152866",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "X",
+                    "type": "Button",
+                    "id": "c6aec5f5-7835-5620-bce3-3451a47a7e79",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Y",
+                    "type": "Button",
+                    "id": "82959803-cb31-524d-8755-cd79ca6359f2",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RB",
+                    "type": "Button",
+                    "id": "fd41380f-a4e4-58da-881b-0c94e84b6435",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RT RotateZ",
+                    "type": "PassThrough",
+                    "id": "890cbd54-9368-5478-a2d6-7e7a5dfda51c",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "LB",
+                    "type": "Button",
+                    "id": "0047e8f7-1c14-5a6e-9fbb-963d91fe5234",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "LT Z",
+                    "type": "PassThrough",
+                    "id": "5f0070fe-b96e-58fb-9331-33aef6d55855",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Minus",
+                    "type": "Button",
+                    "id": "bd077004-e958-548c-ad59-41d37adf6d1b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Plus",
+                    "type": "Button",
+                    "id": "2beaa738-aeba-5daf-9d71-bf96462a73a3",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Generic Trigger - Ignored With LB",
+                    "type": "Button",
+                    "id": "ff49299b-6d56-5973-a48d-59d55c7acca8",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "Joystick stick",
+                    "id": "45daa792-a9ce-5a95-a00a-7684c9354d48",
+                    "path": "<Joystick>/stick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Move Stick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Joystick hatswitch",
+                    "id": "c03e604e-7126-5c3d-86bd-d20dd9fd088a",
+                    "path": "<Joystick>/{Hatswitch}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Hatswitch Dpad",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical A | Unity Y",
+                    "id": "4c815205-a895-5afe-91a8-2d8d13ef55ad",
+                    "path": "<Joystick>/Y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "A",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical X | Unity TriggerRight",
+                    "id": "de84e502-0884-5572-8bcf-ee278813f78d",
+                    "path": "<Joystick>/TriggerRight",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "X",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical Y | Unity TriggerLeft2",
+                    "id": "e77337aa-0b0f-564e-85da-01e8eadfdedb",
+                    "path": "<Joystick>/TriggerLeft2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Y",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical RB | Unity Start",
+                    "id": "356c6f67-9fc7-5fa5-b8da-2aaff0a653d2",
+                    "path": "<Joystick>/Start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "RB",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical RT | Unity RotateZ",
+                    "id": "c8b6b675-9cab-58b5-b34f-e70a9f247af2",
+                    "path": "<Joystick>/RotateZ",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "RT RotateZ",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical LB | Unity Select",
+                    "id": "d784baaf-8330-5efc-8d70-4b404e4c9015",
+                    "path": "<Joystick>/Select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "LB",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical LT | Unity Z",
+                    "id": "fcee97c1-fd66-5eba-b352-47143143dd68",
+                    "path": "<Joystick>/Z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "LT Z",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical - | Unity ThumbRight",
+                    "id": "cf57129d-35da-5cd9-b66d-fde244ac1470",
+                    "path": "<Joystick>/ThumbRight",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Minus",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Physical + | Unity Count",
+                    "id": "a2157f2d-1b46-5430-8701-d1cc6852d8fe",
+                    "path": "<Joystick>/Count",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Plus",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Unity trigger duplicate guard",
+                    "id": "4b8bacb2-3832-5932-b217-4b71434fd949",
+                    "path": "<Joystick>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Generic Trigger - Ignored With LB",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
             "name": "UI",
             "id": "272f6d14-89ba-496f-b7ff-215263d3219f",
             "actions": [
