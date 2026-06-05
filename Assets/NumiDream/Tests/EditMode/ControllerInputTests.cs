@@ -66,6 +66,10 @@ namespace NumiDream.Tests.EditMode
             Assert.That(monitor, Does.Not.Contain(" | value="));
             Assert.That(monitor, Does.Contain("case \"Y\":"));
             Assert.That(monitor, Does.Contain("return \"A\";"));
+            Assert.That(monitor, Does.Contain("case \"ThumbRight\":"));
+            Assert.That(monitor, Does.Contain("return \"-\";"));
+            Assert.That(monitor, Does.Contain("case \"Count\":"));
+            Assert.That(monitor, Does.Contain("return \"+\";"));
             Assert.That(tools, Does.Contain("Press F8 in Play Mode to show the overlay."));
         }
 
