@@ -83,6 +83,8 @@ namespace NumiDream.StageOne
         private bool _collapseEnabled = true;
         private GameObject _generatedWalkSurfaceRoot;
 
+        
+
         private void Awake()
         {
             if (pieceRoot == null)
