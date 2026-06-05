@@ -353,6 +353,10 @@ namespace NumiDream.DebugTools
                     return "RB";
                 case "Select":
                     return "LB";
+                case "ThumbRight":
+                    return "-";
+                case "Count":
+                    return "+";
                 case "RotateZ":
                     return "RT";
                 case "Z":
