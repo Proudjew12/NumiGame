@@ -55,10 +55,10 @@ namespace DreamScripts.EditorTools
 
             if (EditorApplication.isPlaying)
             {
-                ControllerInputMonitor.EnsureExists();
+                ControllerInputMonitor.EnsureExists(show: false);
             }
 
-            Debug.Log("[ControllerInputMonitor] Enabled. The overlay will appear in Play Mode.");
+            Debug.Log("[ControllerInputMonitor] Enabled. Press F8 in Play Mode to show the overlay.");
         }
 
         private static void Disable()
@@ -74,7 +74,8 @@ namespace DreamScripts.EditorTools
             EditorUtility.DisplayDialog(
                 "Controller Input Monitor",
                 "Controller Input Monitor is " + status + ".\n\n" +
-                "When enabled, it appears automatically in Play Mode and shows the exact Unity control path for pressed controller buttons.",
+                "When enabled, it listens in Play Mode. Press F8 to show or hide the overlay.\n\n" +
+                "The overlay shows your physical 8BitDo button name beside the actual Unity control name.",
                 "OK");
         }
 
