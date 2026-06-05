@@ -60,8 +60,10 @@ namespace NumiDream.Tests.EditMode
             Assert.That(monitor, Does.Contain("private bool visible;"));
             Assert.That(monitor, Does.Contain("Press F8 to show controller input"));
             Assert.That(monitor, Does.Contain("EnsureExists(show: false)"));
-            Assert.That(monitor, Does.Contain("U Have Pressed button "));
-            Assert.That(monitor, Does.Contain("Unity gives: "));
+            Assert.That(monitor, Does.Contain("Press Button \\\""));
+            Assert.That(monitor, Does.Contain("\\\" | Unity Gives: \\\""));
+            Assert.That(monitor, Does.Not.Contain(" | path="));
+            Assert.That(monitor, Does.Not.Contain(" | value="));
             Assert.That(monitor, Does.Contain("case \"Y\":"));
             Assert.That(monitor, Does.Contain("return \"A\";"));
             Assert.That(tools, Does.Contain("Press F8 in Play Mode to show the overlay."));
