@@ -35,15 +35,20 @@ namespace NumiDream.Tests.EditMode
         }
 
         [Test]
-        public void EightBitDoAnalogTriggersAreHandledInCodeNotRawInputActions()
+        public void EightBitDoRawControlsAreVisibleAndSpamFilteredInCode()
         {
             var projectRoot = Path.Combine(Application.dataPath, "..");
             var actionsJson = File.ReadAllText(Path.Combine(projectRoot, InputActionsPath));
             var inputHelper = File.ReadAllText(Path.Combine(projectRoot, "Assets/NumiDream/Scripts/NumiInput.cs"));
             var monitor = File.ReadAllText(Path.Combine(projectRoot, "Assets/NumiDream/Scripts/Debug/ControllerInputMonitor.cs"));
 
-            Assert.That(actionsJson, Does.Not.Contain("\"path\": \"<Joystick>/RotateZ\""));
-            Assert.That(actionsJson, Does.Not.Contain("\"path\": \"<Joystick>/Z\""));
+            Assert.That(actionsJson, Does.Contain("\"name\": \"8BitDo Raw Controls\""));
+            Assert.That(actionsJson, Does.Contain("\"name\": \"B - Unmapped\""));
+            Assert.That(actionsJson, Does.Contain("\"path\": \"<Joystick>/RotateZ\""));
+            Assert.That(actionsJson, Does.Contain("\"path\": \"<Joystick>/Z\""));
+            Assert.That(actionsJson, Does.Contain("\"path\": \"<Joystick>/ThumbRight\""));
+            Assert.That(actionsJson, Does.Contain("\"path\": \"<Joystick>/Count\""));
+            Assert.That(actionsJson, Does.Contain("\"name\": \"Generic Trigger - Ignored With LB\""));
             Assert.That(inputHelper, Does.Contain("\"RotateZ\""));
             Assert.That(inputHelper, Does.Contain("\"Z\""));
             Assert.That(inputHelper, Does.Contain("WasFilteredAxisPressed"));
