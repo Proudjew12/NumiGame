@@ -51,6 +51,23 @@ namespace NumiDream.Tests.EditMode
         }
 
         [Test]
+        public void ControllerInputMonitorStartsHiddenAndUsesReadableButtonText()
+        {
+            var projectRoot = Path.Combine(Application.dataPath, "..");
+            var monitor = File.ReadAllText(Path.Combine(projectRoot, "Assets/NumiDream/Scripts/Debug/ControllerInputMonitor.cs"));
+            var tools = File.ReadAllText(Path.Combine(projectRoot, "Assets/DreamScripts/Editor/ControllerInputMonitorTools.cs"));
+
+            Assert.That(monitor, Does.Contain("private bool visible;"));
+            Assert.That(monitor, Does.Contain("Press F8 to show controller input"));
+            Assert.That(monitor, Does.Contain("EnsureExists(show: false)"));
+            Assert.That(monitor, Does.Contain("U Have Pressed button "));
+            Assert.That(monitor, Does.Contain("Unity gives: "));
+            Assert.That(monitor, Does.Contain("case \"Y\":"));
+            Assert.That(monitor, Does.Contain("return \"A\";"));
+            Assert.That(tools, Does.Contain("Press F8 in Play Mode to show the overlay."));
+        }
+
+        [Test]
         public void ControllerInputMonitorRuntimeTypeIsLoadable()
         {
             var monitorType = System.Type.GetType("NumiDream.DebugTools.ControllerInputMonitor, Assembly-CSharp");
