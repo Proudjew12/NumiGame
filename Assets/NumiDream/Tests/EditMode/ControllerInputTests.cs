@@ -47,6 +47,8 @@ namespace NumiDream.Tests.EditMode
             Assert.That(inputHelper, Does.Contain("\"RotateZ\""));
             Assert.That(inputHelper, Does.Contain("\"Z\""));
             Assert.That(inputHelper, Does.Contain("WasFilteredAxisPressed"));
+            Assert.That(inputHelper, Does.Contain("WasGenericJoystickTriggerPressed"));
+            Assert.That(inputHelper, Does.Contain("!IsNamedButtonHeld(joystick, \"Select\")"));
             Assert.That(monitor, Does.Not.Contain("axisRepeatDelay"));
         }
 
@@ -64,6 +66,8 @@ namespace NumiDream.Tests.EditMode
             Assert.That(monitor, Does.Contain("\\\" | Unity Gives: \\\""));
             Assert.That(monitor, Does.Not.Contain(" | path="));
             Assert.That(monitor, Does.Not.Contain(" | value="));
+            Assert.That(monitor, Does.Contain("ShouldIgnoreGenericTriggerWhenSelectHeld"));
+            Assert.That(monitor, Does.Contain("IsNamedButtonHeld(device, \"Select\")"));
             Assert.That(monitor, Does.Contain("case \"Y\":"));
             Assert.That(monitor, Does.Contain("return \"A\";"));
             Assert.That(monitor, Does.Contain("case \"ThumbRight\":"));
