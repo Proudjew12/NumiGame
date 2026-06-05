@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using System.Collections.Generic;
+using NumiDream.Input;
 
 public class InteractableCameraFocus : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class InteractableCameraFocus : MonoBehaviour
     private bool isFocusingObject = false;
     private Transform playerFollowTarget;
     private InteractableManipulator currentManipulator;
+    private int lastInteractFrame = -1;
 
     private readonly HashSet<SpriteOutline> activeOutlines = new();
 
@@ -43,6 +45,10 @@ public class InteractableCameraFocus : MonoBehaviour
     private void Update()
     {
         UpdateOutlines();
+        if (NumiInput.WasInteractPressed())
+        {
+            TryToggleFocus();
+        }
     }
 
     // Single overlap call — updates outlines and caches results for focus use
@@ -78,6 +84,18 @@ public class InteractableCameraFocus : MonoBehaviour
 
     private void OnInteractPressed(InputAction.CallbackContext _)
     {
+        TryToggleFocus();
+    }
+
+    private void TryToggleFocus()
+    {
+        if (lastInteractFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastInteractFrame = Time.frameCount;
+
         if (isFocusingObject)
             ReturnCameraToPlayer();
         else

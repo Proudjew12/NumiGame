@@ -18,11 +18,9 @@ namespace NumiDream.DebugTools
         [SerializeField] private int maxRecentEvents = 14;
         [SerializeField] private float buttonThreshold = 0.5f;
         [SerializeField] private float axisThreshold = 0.35f;
-        [SerializeField] private float axisRepeatDelay = 0.35f;
 
         private readonly Queue<string> recentEvents = new Queue<string>();
         private readonly Dictionary<string, bool> activeControls = new Dictionary<string, bool>();
-        private readonly Dictionary<string, float> lastAxisEventTimes = new Dictionary<string, float>();
         private readonly StringBuilder textBuilder = new StringBuilder(2048);
         private readonly StringBuilder eventBuilder = new StringBuilder(512);
 
@@ -290,7 +288,7 @@ namespace NumiDream.DebugTools
             activeControls.TryGetValue(key, out var wasActive);
             activeControls[key] = isActive;
 
-            if (isActive && ShouldEmitAxisEvent(key, value, wasActive))
+            if (isActive && !wasActive)
             {
                 AddEvent(device, axis, value.ToString("0.00"));
             }
@@ -304,28 +302,10 @@ namespace NumiDream.DebugTools
             activeControls.TryGetValue(key, out var wasActive);
             activeControls[key] = isActive;
 
-            if (isActive && ShouldEmitAxisEvent(key, value.magnitude, wasActive))
+            if (isActive && !wasActive)
             {
                 AddEvent(device, vector, value.ToString("0.00"));
             }
-        }
-
-        private bool ShouldEmitAxisEvent(string key, float value, bool wasActive)
-        {
-            if (!wasActive)
-            {
-                lastAxisEventTimes[key] = Time.realtimeSinceStartup;
-                return true;
-            }
-
-            lastAxisEventTimes.TryGetValue(key, out var lastTime);
-            if (Time.realtimeSinceStartup - lastTime < axisRepeatDelay)
-            {
-                return false;
-            }
-
-            lastAxisEventTimes[key] = Time.realtimeSinceStartup;
-            return Mathf.Abs(value) >= axisThreshold;
         }
 
         private void AddEvent(InputDevice device, InputControl control, string value)
