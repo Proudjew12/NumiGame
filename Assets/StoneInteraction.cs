@@ -23,6 +23,9 @@ public class StoneInteraction : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = popup.AddComponent<CanvasGroup>();
 
+        foreach (var anim in popup.GetComponentsInChildren<Animator>(true))
+            anim.updateMode = AnimatorUpdateMode.UnscaledTime;
+
         popup.SetActive(false);
     }
 
@@ -42,27 +45,36 @@ public class StoneInteraction : MonoBehaviour
 
     private void OnInteract(InputAction.CallbackContext ctx)
     {
-        // Must have an outline active
-        if (spriteOutline == null || spriteOutline.currentOutlineSize <= 0f) return;
-
-        // Must be the closest outlined stone to the player
+        // Only the closest outlined stone handles the interaction
         StoneInteraction closest = GetClosestOutlinedStone();
-        if (closest != this) return;
+        if (closest == null || closest != this) return;
 
         TogglePopup();
     }
 
     private StoneInteraction GetClosestOutlinedStone()
     {
+        // Auto-find player if not assigned
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null) player = playerObj.transform;
+            else return null;
+        }
+
         StoneInteraction nearest = null;
         float minDist = float.MaxValue;
 
         foreach (var stone in allStones)
         {
-            if (stone.spriteOutline == null || stone.spriteOutline.currentOutlineSize <= 0f) continue;
+            // Skip stones with no active outline
+            if (stone.spriteOutline == null || stone.spriteOutline.currentOutlineSize <= 0f)
+                continue;
 
             float dist = Vector2.Distance(player.position, stone.transform.position);
-            if (dist < minDist)
+
+            // Use a small epsilon to break ties deterministically
+            if (dist < minDist - 0.01f)
             {
                 minDist = dist;
                 nearest = stone;
@@ -80,6 +92,13 @@ public class StoneInteraction : MonoBehaviour
 
     void OpenPopup()
     {
+        // Close any other open popups first
+        foreach (var stone in allStones)
+        {
+            if (stone != this && stone.isPopupOpen)
+                stone.ClosePopup();
+        }
+
         isPopupOpen = true;
         popup.SetActive(true);
         StartCoroutine(AnimateIn());

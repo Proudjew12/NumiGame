@@ -238,16 +238,19 @@ Shader "Custom/WaterOrbUI"
                     return glowC * i.color;
                 }
 
-                // ── Interior background ───────────────────────────────
-                float  bgT = length(uv) / _BlobRadius;
-                float4 bg  = lerp(_BgColorInner, _BgColorOuter, saturate(bgT));
-
                 // ── Wave surface ──────────────────────────────────────
                 float normY    = (uv.y + _BlobRadius) / (2.0 * _BlobRadius);
                 float w1       = _WaveAmplitude * sin(uv.x * _WaveFrequency  + time * _WaveSpeed);
                 float w2       = _WaveAmplitude * 0.45 * sin(uv.x * _WaveFrequency2 - time * _WaveSpeed2);
                 float waveSurf = _FillAmount + (w1 + w2) / (2.0 * _BlobRadius);
                 float belowWater = step(normY, waveSurf);
+                float aboveWater = 1.0 - belowWater;
+
+                // ── Interior background — gradient outside→inside, above water only ──
+                // distFromEdge: 0 at blob edge, 1 at centre
+                float distFromEdge = 1.0 - saturate((-bd) / _BlobRadius);
+                // Only apply gradient in the above-water region; below water is filled
+                float4 bg = lerp(_BgColorInner, _BgColorOuter, distFromEdge);
 
                 float  waterDepth = saturate((waveSurf - normY) / max(_FillAmount, 0.001));
                 float4 waterCol   = lerp(
@@ -259,14 +262,15 @@ Shader "Custom/WaterOrbUI"
                 float  foamMask = smoothstep(_FoamThickness, 0.0, abs(normY - waveSurf));
                 float4 foam     = _FoamColor * foamMask;
 
-                // ── Stars ─────────────────────────────────────────────
-                float  starMask = stars(uv, time) * (1.0 - belowWater);
+                // ── Stars — only above waterline ──────────────────────
+                float  starMask = stars(uv, time) * aboveWater;
                 float4 starCol  = float4(0.87, 0.84, 1.0, starMask);
 
                 // ── Glint ─────────────────────────────────────────────
                 float2 glintCenter = float2(-_BlobRadius * 0.38, _BlobRadius * 0.45);
                 float  glintD      = length(uv - glintCenter) / (_BlobRadius * 0.22);
-                float  glint       = exp(-glintD * glintD * 3.0) * _GlintIntensity;
+                // Glint only shows above water too
+                float  glint       = exp(-glintD * glintD * 3.0) * _GlintIntensity * aboveWater;
 
                 // ── Rim ───────────────────────────────────────────────
                 float  rimMask = smoothstep(0.0, _RimWidth, -bd)
@@ -323,8 +327,9 @@ Shader "Custom/WaterOrbUI"
 
                 col.rgb = lerp(col.rgb, illColor, illAlpha);
 
-                // Soft edge fade
-                col.a = smoothstep(0.0, 0.025, -bd);
+                // Resolution-aware edge — 1 pixel wide regardless of RawImage size
+                float edgeWidth = fwidth(bd) * 1.5;
+                col.a = smoothstep(edgeWidth, 0.0, bd);
 
                 #ifdef UNITY_UI_CLIP_RECT
                 col.a *= UnityGet2DClipping(i.worldPos.xy, _ClipRect);
