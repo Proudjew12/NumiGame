@@ -1,9 +1,6 @@
 using System.Collections;
 using UnityEngine;
-
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
+using NumiDream.Input;
 
 namespace NumiDream.StageOne.Puzzles
 {
@@ -189,19 +186,7 @@ namespace NumiDream.StageOne.Puzzles
 
         private static bool WasLiftPressed()
         {
-#if ENABLE_INPUT_SYSTEM
-            var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.tKey.wasPressedThisFrame)
-            {
-                return true;
-            }
-#endif
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKeyDown(KeyCode.T);
-#else
-            return false;
-#endif
+            return NumiInput.WasPuzzleActionPressed();
         }
 
         private void OnValidate()

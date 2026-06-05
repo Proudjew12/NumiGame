@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
+using NumiDream.Input;
 
 namespace NumiDream.StageOne.Puzzles
 {
@@ -1264,83 +1261,19 @@ namespace NumiDream.StageOne.Puzzles
 
         private static bool IsSpinInputHeld()
         {
-#if ENABLE_INPUT_SYSTEM
-            var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.tKey.isPressed)
-            {
-                return true;
-            }
-#endif
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetKey(KeyCode.T);
-#else
-            return false;
-#endif
+            return NumiInput.IsPuzzleActionHeld();
         }
 
         private static bool IsJumpInputHeld()
         {
-#if ENABLE_INPUT_SYSTEM
-            var keyboard = Keyboard.current;
-            if (keyboard != null &&
-                (keyboard.spaceKey.isPressed || keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed))
-            {
-                return true;
-            }
-#endif
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            return Input.GetButton("Jump") ||
-                   Input.GetKey(KeyCode.Space) ||
-                   Input.GetKey(KeyCode.W) ||
-                   Input.GetKey(KeyCode.UpArrow);
-#else
-            return false;
-#endif
+            return NumiInput.IsJumpHeld();
         }
 
         private static int GetHorizontalInputDirection()
         {
-            var direction = 0;
+            var direction = NumiInput.ReadHorizontal(0.12f);
 
-#if ENABLE_INPUT_SYSTEM
-            var keyboard = Keyboard.current;
-            if (keyboard != null)
-            {
-                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
-                {
-                    direction--;
-                }
-
-                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
-                {
-                    direction++;
-                }
-            }
-#endif
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            var axis = Input.GetAxisRaw("Horizontal");
-            if (Mathf.Abs(axis) > 0.01f)
-            {
-                direction += axis > 0f ? 1 : -1;
-            }
-            else
-            {
-                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-                {
-                    direction--;
-                }
-
-                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-                {
-                    direction++;
-                }
-            }
-#endif
-
-            return direction > 0 ? 1 : direction < 0 ? -1 : 0;
+            return direction > 0f ? 1 : direction < 0f ? -1 : 0;
         }
 
         private void OnValidate()

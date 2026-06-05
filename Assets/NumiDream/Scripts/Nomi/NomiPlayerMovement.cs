@@ -1,8 +1,5 @@
 using UnityEngine;
-
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
+using NumiDream.Input;
 
 namespace NumiDream.Nomi
 {
@@ -344,52 +341,10 @@ namespace NumiDream.Nomi
 
         private void ReadMovementInput()
         {
-            float horizontal = 0f;
-            bool jumpPressed = false;
-            bool jumpHeld = false;
-            bool jumpReleased = false;
-
-#if ENABLE_INPUT_SYSTEM
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard != null)
-            {
-                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
-                {
-                    horizontal -= 1f;
-                }
-
-                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
-                {
-                    horizontal += 1f;
-                }
-
-                jumpPressed = keyboard.spaceKey.wasPressedThisFrame
-                    || keyboard.wKey.wasPressedThisFrame
-                    || keyboard.upArrowKey.wasPressedThisFrame;
-                jumpHeld = keyboard.spaceKey.isPressed
-                    || keyboard.wKey.isPressed
-                    || keyboard.upArrowKey.isPressed;
-                jumpReleased = !jumpHeld && (
-                    keyboard.spaceKey.wasReleasedThisFrame
-                    || keyboard.wKey.wasReleasedThisFrame
-                    || keyboard.upArrowKey.wasReleasedThisFrame);
-            }
-#elif ENABLE_LEGACY_INPUT_MANAGER
-            horizontal = Input.GetAxisRaw("Horizontal");
-            jumpPressed = Input.GetButtonDown("Jump")
-                || Input.GetKeyDown(KeyCode.Space)
-                || Input.GetKeyDown(KeyCode.W)
-                || Input.GetKeyDown(KeyCode.UpArrow);
-            jumpHeld = Input.GetButton("Jump")
-                || Input.GetKey(KeyCode.Space)
-                || Input.GetKey(KeyCode.W)
-                || Input.GetKey(KeyCode.UpArrow);
-            jumpReleased = !jumpHeld && (
-                Input.GetButtonUp("Jump")
-                || Input.GetKeyUp(KeyCode.Space)
-                || Input.GetKeyUp(KeyCode.W)
-                || Input.GetKeyUp(KeyCode.UpArrow));
-#endif
+            float horizontal = NumiInput.ReadHorizontal();
+            bool jumpPressed = NumiInput.WasJumpPressed();
+            bool jumpHeld = NumiInput.IsJumpHeld();
+            bool jumpReleased = !jumpHeld && NumiInput.WasJumpReleased();
 
             _moveInput = Mathf.Clamp(horizontal, -1f, 1f);
             _jumpHeld = jumpHeld;
