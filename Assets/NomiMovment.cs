@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
+using NumiDream.Input;
 
 public class NomiMovment : MonoBehaviour
 {
@@ -22,6 +23,7 @@ public class NomiMovment : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     private Vector2 moveDirection;
+    private int lastJumpFrame = -1;
 
     [SerializeField] private CinemachineCamera playerCamera;
 
@@ -45,6 +47,11 @@ public class NomiMovment : MonoBehaviour
         if (!IsPlayerControlled()) return; // ✅ Block movement if camera isn't on player
 
         moveDirection = ReadMoveInput();
+        if (NumiInput.WasJumpPressed())
+        {
+            TryJump();
+        }
+
         HandleFlip();
         AnimationHandler();
     }
@@ -94,11 +101,18 @@ public class NomiMovment : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext _)
     {
+        TryJump();
+    }
+
+    private void TryJump()
+    {
         if (!IsPlayerControlled()) return; // ✅ Block jump if camera isn't on player
+        if (lastJumpFrame == Time.frameCount) return;
 
         if (IsGrounded())
         {
-             player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
+            lastJumpFrame = Time.frameCount;
+            player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
             player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             animator.SetTrigger("Jump");
         }
@@ -152,6 +166,11 @@ public class NomiMovment : MonoBehaviour
     private Vector2 ReadMoveInput()
     {
         float actionHorizontal = Mathf.Clamp(ReadVectorAction(move).x, -1f, 1f);
+        if (Mathf.Abs(actionHorizontal) < 0.01f)
+        {
+            actionHorizontal = NumiInput.ReadHorizontal();
+        }
+
         return new Vector2(actionHorizontal, 0f);
     }
 
