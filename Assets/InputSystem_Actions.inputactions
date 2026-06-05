@@ -190,7 +190,51 @@
                     "path": "<Keyboard>/e",
                     "interactions": "",
                     "processors": "",
-                    "groups": ";Gamepad",
+                    "groups": "Keyboard&Mouse",
+                    "action": "ScaleUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Gamepad Face",
+                    "id": "11951d8a-68f3-4d2f-a9ee-8acdf0ffcc4f",
+                    "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ScaleUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Right Bumper",
+                    "id": "c4d71249-1a33-4da3-974a-8b229010d4ad",
+                    "path": "<Gamepad>/rightShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ScaleUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Right Trigger",
+                    "id": "bc3547fd-7faa-406f-b928-db1eec0ec6b2",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ScaleUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Generic Joystick",
+                    "id": "7df095c2-b939-4c72-a749-51b918f6f716",
+                    "path": "<Joystick>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
                     "action": "ScaleUp",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -212,7 +256,40 @@
                     "path": "<Keyboard>/q",
                     "interactions": "",
                     "processors": "",
-                    "groups": ";Gamepad",
+                    "groups": "Keyboard&Mouse",
+                    "action": "ScaleDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Gamepad Face",
+                    "id": "dc9e41db-f6d9-42b8-b3d3-62b37577311e",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ScaleDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Left Bumper",
+                    "id": "10c38f78-c47d-4e63-89c4-a0e15af05478",
+                    "path": "<Gamepad>/leftShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ScaleDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Left Trigger",
+                    "id": "1f6c8ec8-7db5-44dd-a292-8a93ce34a9aa",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
                     "action": "ScaleDown",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -306,6 +383,28 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "8BitDo / Dpad Up",
+                    "id": "8cd40772-f87b-4f8b-9241-cb0eb4f62b55",
+                    "path": "<Gamepad>/dpad/up",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Generic Joystick",
+                    "id": "9e6dd366-258e-4cd0-93ff-229d1467de7b",
+                    "path": "<Joystick>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "",
                     "id": "603f3daf-40bd-4854-8724-93e8017f59e3",
                     "path": "<XRController>/secondaryButton",
@@ -361,6 +460,39 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "8BitDo / Right Bumper",
+                    "id": "09f0e738-3032-4519-b94d-9afcc223197f",
+                    "path": "<Gamepad>/rightShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Right Trigger",
+                    "id": "2f1c550b-9063-48a9-8505-981853fe4ae5",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Generic Joystick",
+                    "id": "a255a821-fb1f-4a79-9567-43dcffdb23a7",
+                    "path": "<Joystick>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "",
                     "id": "522e47ae-91ef-4593-b726-fa9a61a56591",
                     "path": "<Keyboard>/q",
@@ -378,6 +510,17 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
+                    "action": "do",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Generic Joystick",
+                    "id": "0ae8c9f2-1bc5-4989-bc77-2e5328b613c2",
+                    "path": "<Joystick>/trigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
                     "action": "do",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -469,6 +612,39 @@
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "8BitDo / Dpad",
+                    "id": "f93b6c5a-8425-411c-9e51-24e32f5d03f6",
+                    "path": "<Gamepad>/dpad",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Generic Joystick Stick",
+                    "id": "fd94108b-111d-465d-a4ce-013b8412b895",
+                    "path": "<Joystick>/stick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "8BitDo / Generic Joystick Hatswitch",
+                    "id": "6087d8b2-4ca8-40ee-9889-ebdcc69092ef",
+                    "path": "<Joystick>/{Hatswitch}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Joystick",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
