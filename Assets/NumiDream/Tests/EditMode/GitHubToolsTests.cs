@@ -196,7 +196,7 @@ namespace NumiDream.Tests.EditMode
         }
 
         [Test]
-        public void BranchPickerRowsIncludeLastUpdateTimeAndAuthor()
+        public void BranchPickerRowsIncludeLastUpdateDateAndAuthor()
         {
             var repo = CreateRepoWithOrigin();
             CreateAndPushBranch(repo, "history/scene-one", "history-row.txt", "history row\n", "History row");
@@ -206,7 +206,7 @@ namespace NumiDream.Tests.EditMode
 
             Assert.That(row, Is.Not.Null);
             Assert.That(row, Does.Contain(((char)0x200E).ToString()));
-            Assert.That(row, Does.Match(@"\d{1,2},\d{1,2},\d{4} \d{2}:\d{2}"));
+            Assert.That(row, Does.Match(@"\d{1,2}/\d{1,2}/\d{4}"));
             Assert.That(row, Does.Contain("|Test User|"));
             Assert.That(row, Does.Contain("local + GitHub"));
         }
