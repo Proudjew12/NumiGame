@@ -27,6 +27,27 @@ namespace NumiDream.Tests.EditMode
             StringAssert.Contains("\"path\": \"<Gamepad>/rightTrigger\"", actionsJson);
             StringAssert.Contains("\"path\": \"<Gamepad>/leftShoulder\"", actionsJson);
             StringAssert.Contains("\"path\": \"<Gamepad>/leftTrigger\"", actionsJson);
+            StringAssert.Contains("\"path\": \"<Joystick>/Y\"", actionsJson);
+            StringAssert.Contains("\"path\": \"<Joystick>/TriggerRight\"", actionsJson);
+            StringAssert.Contains("\"path\": \"<Joystick>/TriggerLeft2\"", actionsJson);
+            StringAssert.Contains("\"path\": \"<Joystick>/Start\"", actionsJson);
+            StringAssert.Contains("\"path\": \"<Joystick>/Select\"", actionsJson);
+        }
+
+        [Test]
+        public void EightBitDoAnalogTriggersAreHandledInCodeNotRawInputActions()
+        {
+            var projectRoot = Path.Combine(Application.dataPath, "..");
+            var actionsJson = File.ReadAllText(Path.Combine(projectRoot, InputActionsPath));
+            var inputHelper = File.ReadAllText(Path.Combine(projectRoot, "Assets/NumiDream/Scripts/NumiInput.cs"));
+            var monitor = File.ReadAllText(Path.Combine(projectRoot, "Assets/NumiDream/Scripts/Debug/ControllerInputMonitor.cs"));
+
+            Assert.That(actionsJson, Does.Not.Contain("\"path\": \"<Joystick>/RotateZ\""));
+            Assert.That(actionsJson, Does.Not.Contain("\"path\": \"<Joystick>/Z\""));
+            Assert.That(inputHelper, Does.Contain("\"RotateZ\""));
+            Assert.That(inputHelper, Does.Contain("\"Z\""));
+            Assert.That(inputHelper, Does.Contain("WasFilteredAxisPressed"));
+            Assert.That(monitor, Does.Not.Contain("axisRepeatDelay"));
         }
 
         [Test]

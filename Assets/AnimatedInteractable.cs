@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using System.Collections;
+using NumiDream.Input;
 
 public class AnimatedInteractable : MonoBehaviour
 {
@@ -53,6 +54,7 @@ public class AnimatedInteractable : MonoBehaviour
     private Coroutine[] moveCoroutines;
 
     private SpriteOutline spriteOutline;
+    private int lastActivateFrame = -1;
 
     void Start()
     {
@@ -84,6 +86,11 @@ public class AnimatedInteractable : MonoBehaviour
     void Update()
     {
         if (puzzleSolved) return;
+
+        if (NumiInput.WasPuzzleActionPressed())
+        {
+            TryActivate();
+        }
 
         // Camera priority follows outline
         if (puzzleCamera != null && spriteOutline != null)
@@ -143,7 +150,15 @@ public class AnimatedInteractable : MonoBehaviour
 
     private void OnActivatePressed(InputAction.CallbackContext _)
     {
+        TryActivate();
+    }
+
+    private void TryActivate()
+    {
         if (puzzleSolved) return;
+        if (lastActivateFrame == Time.frameCount) return;
+
+        lastActivateFrame = Time.frameCount;
 
         // Camera priority follows outline
         if (puzzleCamera != null && spriteOutline != null)
