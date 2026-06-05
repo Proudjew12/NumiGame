@@ -99,7 +99,7 @@ namespace NumiDream.Input
 
             var joystick = Joystick.current;
             if (joystick != null &&
-                (joystick.trigger.wasPressedThisFrame ||
+                (WasGenericJoystickTriggerPressed(joystick) ||
                  WasNamedButtonPressed(joystick, "Y")))
             {
                 return true;
@@ -138,7 +138,7 @@ namespace NumiDream.Input
 
             var joystick = Joystick.current;
             if (joystick != null &&
-                (joystick.trigger.isPressed ||
+                (IsGenericJoystickTriggerHeld(joystick) ||
                  IsNamedButtonHeld(joystick, "Y")))
             {
                 return true;
@@ -177,7 +177,7 @@ namespace NumiDream.Input
 
             var joystick = Joystick.current;
             if (joystick != null &&
-                (joystick.trigger.wasReleasedThisFrame ||
+                (WasGenericJoystickTriggerReleased(joystick) ||
                  WasNamedButtonReleased(joystick, "Y")))
             {
                 return true;
@@ -214,7 +214,7 @@ namespace NumiDream.Input
 
             var joystick = Joystick.current;
             if (joystick != null &&
-                (joystick.trigger.wasPressedThisFrame ||
+                (WasGenericJoystickTriggerPressed(joystick) ||
                  Was8BitDoRightActionPressed(joystick) ||
                  Was8BitDoLeftActionPressed(joystick)))
             {
@@ -249,7 +249,7 @@ namespace NumiDream.Input
 
             var joystick = Joystick.current;
             if (joystick != null &&
-                (joystick.trigger.isPressed ||
+                (IsGenericJoystickTriggerHeld(joystick) ||
                  Is8BitDoRightActionHeld(joystick) ||
                  Is8BitDoLeftActionHeld(joystick)))
             {
@@ -284,7 +284,7 @@ namespace NumiDream.Input
 
             var joystick = Joystick.current;
             if (joystick != null &&
-                (joystick.trigger.wasPressedThisFrame ||
+                (WasGenericJoystickTriggerPressed(joystick) ||
                  Was8BitDoRightActionPressed(joystick)))
             {
                 return true;
@@ -376,6 +376,27 @@ namespace NumiDream.Input
         {
             var button = device.TryGetChildControl<ButtonControl>(controlName);
             return button != null && button.wasReleasedThisFrame;
+        }
+
+        private static bool WasGenericJoystickTriggerPressed(Joystick joystick)
+        {
+            return !IsNamedButtonHeld(joystick, "Select") &&
+                   joystick.trigger != null &&
+                   joystick.trigger.wasPressedThisFrame;
+        }
+
+        private static bool IsGenericJoystickTriggerHeld(Joystick joystick)
+        {
+            return !IsNamedButtonHeld(joystick, "Select") &&
+                   joystick.trigger != null &&
+                   joystick.trigger.isPressed;
+        }
+
+        private static bool WasGenericJoystickTriggerReleased(Joystick joystick)
+        {
+            return !IsNamedButtonHeld(joystick, "Select") &&
+                   joystick.trigger != null &&
+                   joystick.trigger.wasReleasedThisFrame;
         }
 
         private static bool WasFilteredAxisPressed(

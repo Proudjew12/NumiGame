@@ -271,6 +271,12 @@ namespace NumiDream.DebugTools
         private void CaptureButton(InputDevice device, ButtonControl button)
         {
             var key = button.path;
+            if (ShouldIgnoreGenericTriggerWhenSelectHeld(device, button))
+            {
+                activeControls[key] = false;
+                return;
+            }
+
             var isActive = button.ReadValue() >= buttonThreshold;
             activeControls.TryGetValue(key, out var wasActive);
             activeControls[key] = isActive;
@@ -337,6 +343,18 @@ namespace NumiDream.DebugTools
         private static string SafeText(string value)
         {
             return string.IsNullOrEmpty(value) ? "none" : value;
+        }
+
+        private static bool ShouldIgnoreGenericTriggerWhenSelectHeld(InputDevice device, ButtonControl button)
+        {
+            return string.Equals(button.name, "trigger", System.StringComparison.OrdinalIgnoreCase) &&
+                   IsNamedButtonHeld(device, "Select");
+        }
+
+        private static bool IsNamedButtonHeld(InputDevice device, string controlName)
+        {
+            var button = device.TryGetChildControl<ButtonControl>(controlName);
+            return button != null && button.isPressed;
         }
 
         private static string GetControllerButtonName(InputControl control)
