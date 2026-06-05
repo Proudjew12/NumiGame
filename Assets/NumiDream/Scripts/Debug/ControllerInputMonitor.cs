@@ -13,7 +13,7 @@ namespace NumiDream.DebugTools
     {
         public const string EnabledPlayerPrefsKey = "NumiDream.ControllerInputMonitor.Enabled";
 
-        [SerializeField] private bool visible = true;
+        [SerializeField] private bool visible;
         [SerializeField] private bool showOnlyControllers = true;
         [SerializeField] private int maxRecentEvents = 14;
         [SerializeField] private float buttonThreshold = 0.5f;
@@ -24,7 +24,7 @@ namespace NumiDream.DebugTools
         private readonly StringBuilder textBuilder = new StringBuilder(2048);
         private readonly StringBuilder eventBuilder = new StringBuilder(512);
 
-        private string lastEvent = "Waiting for controller input";
+        private string lastEvent = "Press F8 to show controller input";
         private GUIStyle headerStyle;
         private GUIStyle labelStyle;
         private GUIStyle smallStyle;
@@ -37,18 +37,24 @@ namespace NumiDream.DebugTools
             PlayerPrefs.Save();
         }
 
-        public static ControllerInputMonitor EnsureExists()
+        public static ControllerInputMonitor EnsureExists(bool show = false)
         {
             var existing = FindFirstObjectByType<ControllerInputMonitor>();
             if (existing != null)
             {
-                existing.visible = true;
+                if (show)
+                {
+                    existing.visible = true;
+                }
+
                 return existing;
             }
 
             var monitorObject = new GameObject("Controller Input Monitor");
             DontDestroyOnLoad(monitorObject);
-            return monitorObject.AddComponent<ControllerInputMonitor>();
+            var monitor = monitorObject.AddComponent<ControllerInputMonitor>();
+            monitor.visible = show;
+            return monitor;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -56,7 +62,7 @@ namespace NumiDream.DebugTools
         {
             if (IsAutoCreateEnabled)
             {
-                EnsureExists();
+                EnsureExists(show: false);
             }
         }
 
@@ -114,7 +120,7 @@ namespace NumiDream.DebugTools
 
             GUILayout.BeginArea(new Rect(panelRect.x + 14f, panelRect.y + 12f, panelRect.width - 28f, panelRect.height - 24f));
             GUILayout.Label("Controller Input Monitor", headerStyle);
-            GUILayout.Label(string.Concat("Last: ", lastEvent), labelStyle);
+            GUILayout.Label(lastEvent, labelStyle);
             GUILayout.Space(8f);
             GUILayout.Label(BuildMonitorText(), smallStyle);
             GUILayout.EndArea();
@@ -136,7 +142,7 @@ namespace NumiDream.DebugTools
 
             labelStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 15,
+                fontSize = 18,
                 fontStyle = FontStyle.Bold,
                 wordWrap = true,
                 normal = { textColor = Color.white }
@@ -144,7 +150,7 @@ namespace NumiDream.DebugTools
 
             smallStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 13,
+                fontSize = 15,
                 wordWrap = true,
                 normal = { textColor = new Color(0.88f, 0.92f, 0.96f) }
             };
@@ -179,7 +185,7 @@ namespace NumiDream.DebugTools
             }
 
             textBuilder.AppendLine();
-            textBuilder.AppendLine("Recent pressed / moved controls:");
+            textBuilder.AppendLine("Pressed buttons:");
             if (recentEvents.Count == 0)
             {
                 textBuilder.AppendLine("- waiting");
@@ -193,7 +199,7 @@ namespace NumiDream.DebugTools
             }
 
             textBuilder.AppendLine();
-            textBuilder.AppendLine("Keyboard: F8 hide/show, F9 clear");
+            textBuilder.AppendLine("Keyboard: F8 show/hide, F9 clear");
 #else
             textBuilder.AppendLine("Unity Input System is not enabled.");
 #endif
@@ -311,13 +317,9 @@ namespace NumiDream.DebugTools
         private void AddEvent(InputDevice device, InputControl control, string value)
         {
             eventBuilder.Length = 0;
-            eventBuilder.Append("- ");
-            eventBuilder.Append(Time.realtimeSinceStartup.ToString("0.00"));
-            eventBuilder.Append("s | ");
-            eventBuilder.Append(device.displayName);
-            eventBuilder.Append(" | display=");
-            eventBuilder.Append(SafeText(control.displayName));
-            eventBuilder.Append(" | name=");
+            eventBuilder.Append("U Have Pressed button ");
+            eventBuilder.Append(GetControllerButtonName(control));
+            eventBuilder.Append(" | Unity gives: ");
             eventBuilder.Append(control.name);
             eventBuilder.Append(" | path=");
             eventBuilder.Append(control.path);
@@ -326,8 +328,8 @@ namespace NumiDream.DebugTools
 
             var line = eventBuilder.ToString();
 
-            lastEvent = line.Substring(2);
-            recentEvents.Enqueue(line);
+            lastEvent = line;
+            recentEvents.Enqueue("- " + line);
 
             while (recentEvents.Count > Mathf.Max(1, maxRecentEvents))
             {
@@ -338,6 +340,29 @@ namespace NumiDream.DebugTools
         private static string SafeText(string value)
         {
             return string.IsNullOrEmpty(value) ? "none" : value;
+        }
+
+        private static string GetControllerButtonName(InputControl control)
+        {
+            switch (control.name)
+            {
+                case "Y":
+                    return "A";
+                case "TriggerRight":
+                    return "X";
+                case "TriggerLeft2":
+                    return "Y";
+                case "Start":
+                    return "RB";
+                case "Select":
+                    return "LB";
+                case "RotateZ":
+                    return "RT";
+                case "Z":
+                    return "LT";
+                default:
+                    return SafeText(control.displayName);
+            }
         }
 #endif
     }
