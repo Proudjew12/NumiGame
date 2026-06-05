@@ -317,14 +317,11 @@ namespace NumiDream.DebugTools
         private void AddEvent(InputDevice device, InputControl control, string value)
         {
             eventBuilder.Length = 0;
-            eventBuilder.Append("U Have Pressed button ");
+            eventBuilder.Append("Press Button \"");
             eventBuilder.Append(GetControllerButtonName(control));
-            eventBuilder.Append(" | Unity gives: ");
+            eventBuilder.Append("\" | Unity Gives: \"");
             eventBuilder.Append(control.name);
-            eventBuilder.Append(" | path=");
-            eventBuilder.Append(control.path);
-            eventBuilder.Append(" | value=");
-            eventBuilder.Append(value);
+            eventBuilder.Append("\"");
 
             var line = eventBuilder.ToString();
 
