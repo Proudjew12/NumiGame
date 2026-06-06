@@ -23,8 +23,10 @@ public class NomiMovment : MonoBehaviour
 
     private Vector2 moveDirection;
     private readonly Collider2D[] groundHitsForAudio = new Collider2D[8];
+    private Collider2D lastGroundColliderForAudio;
 
     [SerializeField] private CinemachineCamera playerCamera;
+    [SerializeField] private NomiFootstepAudio footstepAudio;
 
     // ✅ Track the previous follow target to detect changes
     private Transform lastFollowTarget;
@@ -36,6 +38,7 @@ public class NomiMovment : MonoBehaviour
     public float HorizontalInputForAudio => IsPlayerControlled() ? moveDirection.x : 0f;
     public float HorizontalSpeedForAudio => player != null ? Mathf.Abs(player.linearVelocity.x) : 0f;
     public Collider2D GroundColliderForAudio => GetGroundCollider();
+    public Collider2D LastGroundColliderForAudio => lastGroundColliderForAudio;
 
     public bool HasGroundColliderForAudio(Collider2D target)
     {
@@ -64,6 +67,7 @@ public class NomiMovment : MonoBehaviour
     void Start()
     {
         instance = this;
+        FindAudioReferences();
 
         if (playerCamera != null)
             lastFollowTarget = playerCamera.Follow;
@@ -129,9 +133,19 @@ public class NomiMovment : MonoBehaviour
 
         if (IsGrounded())
         {
-             player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
+            player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
             player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             animator.SetTrigger("Jump");
+            FindAudioReferences();
+            footstepAudio?.PlayJumpFromInput();
+        }
+    }
+
+    private void FindAudioReferences()
+    {
+        if (footstepAudio == null)
+        {
+            footstepAudio = GetComponent<NomiFootstepAudio>();
         }
     }
 
@@ -142,7 +156,13 @@ public class NomiMovment : MonoBehaviour
 
     private Collider2D GetGroundCollider()
     {
-        return groundCheck != null ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer) : null;
+        var groundCollider = groundCheck != null ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer) : null;
+        if (groundCollider != null)
+        {
+            lastGroundColliderForAudio = groundCollider;
+        }
+
+        return groundCollider;
     }
 
     private void OnDrawGizmos()
