@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace NumiDream.Collectables
 {
@@ -26,6 +27,22 @@ namespace NumiDream.Collectables
         [InspectorName("Fill Animation Duration")]
         [SerializeField] private float fillDuration = 0.5f;
 
+        [Space(10)]
+        [Header("--------- Audio ---------")]
+        [Header("+Collect+")]
+        [Space(4)]
+        [InspectorName("Sound")]
+        [SerializeField] private AudioClip collectSound;
+        [Space(4)]
+        [InspectorName("Volume")]
+        [SerializeField, Range(0f, 1f)] private float collectSoundVolume = 1f;
+        [Space(4)]
+        [InspectorName("Output")]
+        [SerializeField] private AudioMixerGroup output;
+        [Space(4)]
+        [InspectorName("Spatial Blend")]
+        [SerializeField, Range(0f, 1f)] private float collectSoundSpatialBlend = 0.15f;
+
         private bool _collected;
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -44,6 +61,7 @@ namespace NumiDream.Collectables
                 return;
 
             _collected = true;
+            PlayCollectSound();
 
             if (waterOrb != null)
             {
@@ -58,6 +76,27 @@ namespace NumiDream.Collectables
             }
 
             gameObject.SetActive(false);
+        }
+
+        private void PlayCollectSound()
+        {
+            if (collectSound == null)
+            {
+                return;
+            }
+
+            var soundObject = new GameObject($"{name}-CollectSound");
+            soundObject.transform.position = transform.position;
+
+            var source = soundObject.AddComponent<AudioSource>();
+            source.clip = collectSound;
+            source.volume = collectSoundVolume;
+            source.spatialBlend = collectSoundSpatialBlend;
+            source.outputAudioMixerGroup = output;
+            source.playOnAwake = false;
+            source.Play();
+
+            Destroy(soundObject, collectSound.length + 0.1f);
         }
     }
 }

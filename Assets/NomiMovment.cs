@@ -22,6 +22,7 @@ public class NomiMovment : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     private Vector2 moveDirection;
+    private readonly Collider2D[] groundHitsForAudio = new Collider2D[8];
 
     [SerializeField] private CinemachineCamera playerCamera;
 
@@ -29,6 +30,36 @@ public class NomiMovment : MonoBehaviour
     private Transform lastFollowTarget;
 
     public static NomiMovment instance;
+
+    public bool IsGroundedForAudio => IsGrounded();
+    public bool IsPlayerControlledForAudio => IsPlayerControlled();
+    public float HorizontalInputForAudio => IsPlayerControlled() ? moveDirection.x : 0f;
+    public float HorizontalSpeedForAudio => player != null ? Mathf.Abs(player.linearVelocity.x) : 0f;
+    public Collider2D GroundColliderForAudio => GetGroundCollider();
+
+    public bool HasGroundColliderForAudio(Collider2D target)
+    {
+        if (target == null || groundCheck == null)
+        {
+            return false;
+        }
+
+        var hitCount = Physics2D.OverlapCircleNonAlloc(
+            groundCheck.position,
+            groundCheckRadius,
+            groundHitsForAudio,
+            groundLayer);
+
+        for (var i = 0; i < hitCount; i++)
+        {
+            if (groundHitsForAudio[i] == target)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     void Start()
     {
@@ -107,6 +138,11 @@ public class NomiMovment : MonoBehaviour
     private bool IsGrounded()
     {
         return groundCheck != null && Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+    }
+
+    private Collider2D GetGroundCollider()
+    {
+        return groundCheck != null ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer) : null;
     }
 
     private void OnDrawGizmos()
