@@ -160,20 +160,50 @@ public class WaterOrbUIController : MonoBehaviour
     static readonly int ID_StarT     = Shader.PropertyToID("_StarTwinkleSpeed");
     static readonly int ID_Glint     = Shader.PropertyToID("_GlintIntensity");
 
+    // The source material assigned by the user — never destroyed
+    private Material _sourceMaterial;
+
+    void Awake()
+    {
+        _rawImage = GetComponent<RawImage>();
+        // Cache the original asset material once on Awake
+        if (_rawImage != null && _rawImage.material != null)
+            _sourceMaterial = _rawImage.material;
+    }
+
     void OnEnable()
     {
         _rawImage = GetComponent<RawImage>();
-        if (_rawImage.material == null) return;
+        if (_rawImage == null) return;
 
-        _matInstance       = new Material(_rawImage.material);
-        _matInstance.name  = _rawImage.material.name + " (Instance)";
+        // Recover source if we lost it
+        if (_sourceMaterial == null && _rawImage.material != null)
+            _sourceMaterial = _rawImage.material;
+
+        if (_sourceMaterial == null) return;
+
+        // Reuse existing instance or create a fresh one
+        if (_matInstance == null)
+        {
+            _matInstance      = new Material(_sourceMaterial);
+            _matInstance.name = _sourceMaterial.name + " (Instance)";
+        }
+
         _rawImage.material = _matInstance;
-
         PushAll();
     }
 
     void OnDisable()
     {
+        // Restore the original asset material so it never shows as "Missing"
+        // Keep _matInstance alive for reuse when re-enabled
+        if (_rawImage != null && _sourceMaterial != null)
+            _rawImage.material = _sourceMaterial;
+    }
+
+    void OnDestroy()
+    {
+        // Only destroy the instance when the GameObject is actually destroyed
         if (_matInstance != null)
         {
             if (Application.isPlaying) Destroy(_matInstance);

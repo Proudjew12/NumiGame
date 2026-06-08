@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using System.Collections;
+using UnityEngine.Audio;
 
 public class AnimatedInteractable : MonoBehaviour
 {
@@ -32,6 +33,13 @@ public class AnimatedInteractable : MonoBehaviour
     [Tooltip("How long the player can idle between groups before the puzzle resets")]
     [SerializeField] private float idleResetDuration = 4f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip[] bellSounds;
+    [SerializeField, Range(0f, 1f)] private float bellSoundVolume = 1f;
+    [SerializeField] private AudioMixerGroup bellSoundOutput;
+    [SerializeField] private AudioSource bellAudioSource;
+    [SerializeField, Range(0f, 1f)] private float bellSoundSpatialBlend = 0.15f;
+
     // Step 0: 4 taps → island1 drops
     // Step 1: 2 taps → island2 drops
     // Step 2: 3 taps → island4 drops
@@ -56,6 +64,7 @@ public class AnimatedInteractable : MonoBehaviour
 
     void Start()
     {
+        ConfigureBellAudioSource();
         spriteOutline = GetComponent<SpriteOutline>();
         stepIslands = new Transform[] { island1, island2, island4, island5 };
 
@@ -153,11 +162,13 @@ public class AnimatedInteractable : MonoBehaviour
         // Tapping during the mandatory pause = fail
         if (waitingForPause)
         {
+            PlayBellSound();
             Debug.Log("Tapped during pause — resetting.");
             ResetPuzzle();
             return;
         }
 
+        PlayBellSound();
         currentTapCount++;
         tapTimer = 0f;
 
@@ -179,6 +190,48 @@ public class AnimatedInteractable : MonoBehaviour
 
             StartCoroutine(DelayedDrop(currentStep));
         }
+    }
+
+    private void PlayBellSound()
+    {
+        if (bellSounds == null || bellSounds.Length == 0)
+        {
+            return;
+        }
+
+        ConfigureBellAudioSource();
+
+        if (bellAudioSource == null)
+        {
+            return;
+        }
+
+        var clip = bellSounds[Random.Range(0, bellSounds.Length)];
+        if (clip == null)
+        {
+            return;
+        }
+
+        bellAudioSource.pitch = 1f;
+        bellAudioSource.PlayOneShot(clip, bellSoundVolume);
+    }
+
+    private void ConfigureBellAudioSource()
+    {
+        if (bellAudioSource == null)
+        {
+            bellAudioSource = GetComponent<AudioSource>();
+        }
+
+        if (bellAudioSource == null)
+        {
+            bellAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        bellAudioSource.playOnAwake = false;
+        bellAudioSource.loop = false;
+        bellAudioSource.spatialBlend = bellSoundSpatialBlend;
+        bellAudioSource.outputAudioMixerGroup = bellSoundOutput;
     }
 
     private IEnumerator DelayedDrop(int stepIndex)

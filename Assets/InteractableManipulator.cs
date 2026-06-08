@@ -8,6 +8,9 @@ public class InteractableManipulator : MonoBehaviour
     [Header("Camera Reference")]
     [SerializeField] private CinemachineCamera playerCamera;
 
+    [Header("Focus Collider Trigger")]
+    [SerializeField] private Collider2D targetCollider; // Assign the other object's collider here
+
     [Header("Move")]
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private InputActionReference moveAction;
@@ -28,6 +31,7 @@ public class InteractableManipulator : MonoBehaviour
 
     private bool _isSnappingBack = false;
     private Rigidbody2D _rb;
+    private bool _wasFocused = false; // tracks previous focus state
 
     private bool IsControlled => playerCamera != null && playerCamera.Follow == transform;
 
@@ -52,6 +56,8 @@ public class InteractableManipulator : MonoBehaviour
 
     private void Update()
     {
+        HandleFocusColliderToggle();
+
         if (originPoint != null && !_isSnappingBack)
         {
             float distance = Vector3.Distance(transform.position, originPoint.position);
@@ -97,6 +103,25 @@ public class InteractableManipulator : MonoBehaviour
             transform.localScale = new Vector3(next, next, next);
         }
     }
+
+    // Enables the target collider when focused, disables it when focus is lost
+  private void HandleFocusColliderToggle()
+{
+    if (targetCollider == null) return;
+
+    bool isFocusedNow = IsControlled;
+
+    if (isFocusedNow && !_wasFocused)
+    {
+        targetCollider.enabled = false;
+    }
+    else if (!isFocusedNow && _wasFocused)
+    {
+        targetCollider.enabled = true;
+    }
+
+    _wasFocused = isFocusedNow;
+}
 
     private void SnapBack()
     {
@@ -148,23 +173,19 @@ public class InteractableManipulator : MonoBehaviour
         instantSnap = false;
     }
 
-    private void OnCollisionEnter2D(Collision2D col)
-    {
-        if (col.gameObject.CompareTag("Player"))
-        {
-            _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
-        }
-    }
+    // private void OnCollisionEnter2D(Collision2D col)
+    // {
+    //     if (col.gameObject.CompareTag("Player"))
+    //     {
+    //         _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
+    //     }
+    // }
 
-    
-
-    private void OnCollisionExit2D(Collision2D col)
-    {
-        if (col.gameObject.CompareTag("Player"))
-        {
-            _rb.constraints = RigidbodyConstraints2D.None;
-        }
-    }
-
-
+    // private void OnCollisionExit2D(Collision2D col)
+    // {
+    //     if (col.gameObject.CompareTag("Player"))
+    //     {
+    //         _rb.constraints = RigidbodyConstraints2D.None;
+    //     }
+    // }
 }

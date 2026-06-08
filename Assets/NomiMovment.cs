@@ -22,17 +22,52 @@ public class NomiMovment : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     private Vector2 moveDirection;
+    private readonly Collider2D[] groundHitsForAudio = new Collider2D[8];
+    private Collider2D lastGroundColliderForAudio;
 
     [SerializeField] private CinemachineCamera playerCamera;
+    [SerializeField] private NomiFootstepAudio footstepAudio;
 
     // ✅ Track the previous follow target to detect changes
     private Transform lastFollowTarget;
 
     public static NomiMovment instance;
 
+    public bool IsGroundedForAudio => IsGrounded();
+    public bool IsPlayerControlledForAudio => IsPlayerControlled();
+    public float HorizontalInputForAudio => IsPlayerControlled() ? moveDirection.x : 0f;
+    public float HorizontalSpeedForAudio => player != null ? Mathf.Abs(player.linearVelocity.x) : 0f;
+    public Collider2D GroundColliderForAudio => GetGroundCollider();
+    public Collider2D LastGroundColliderForAudio => lastGroundColliderForAudio;
+
+    public bool HasGroundColliderForAudio(Collider2D target)
+    {
+        if (target == null || groundCheck == null)
+        {
+            return false;
+        }
+
+        var hitCount = Physics2D.OverlapCircleNonAlloc(
+            groundCheck.position,
+            groundCheckRadius,
+            groundHitsForAudio,
+            groundLayer);
+
+        for (var i = 0; i < hitCount; i++)
+        {
+            if (groundHitsForAudio[i] == target)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void Start()
     {
         instance = this;
+        FindAudioReferences();
 
         if (playerCamera != null)
             lastFollowTarget = playerCamera.Follow;
@@ -98,15 +133,36 @@ public class NomiMovment : MonoBehaviour
 
         if (IsGrounded())
         {
-             player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
+            player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
             player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             animator.SetTrigger("Jump");
+            FindAudioReferences();
+            footstepAudio?.PlayJumpFromInput();
+        }
+    }
+
+    private void FindAudioReferences()
+    {
+        if (footstepAudio == null)
+        {
+            footstepAudio = GetComponent<NomiFootstepAudio>();
         }
     }
 
     private bool IsGrounded()
     {
         return groundCheck != null && Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+    }
+
+    private Collider2D GetGroundCollider()
+    {
+        var groundCollider = groundCheck != null ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer) : null;
+        if (groundCollider != null)
+        {
+            lastGroundColliderForAudio = groundCollider;
+        }
+
+        return groundCollider;
     }
 
     private void OnDrawGizmos()
