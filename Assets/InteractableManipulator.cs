@@ -173,19 +173,19 @@ public class InteractableManipulator : MonoBehaviour
         instantSnap = false;
     }
 
-    private void OnCollisionEnter2D(Collision2D col)
-    {
-        if (col.gameObject.CompareTag("Player"))
-        {
-            _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
-        }
-    }
+    // private void OnCollisionEnter2D(Collision2D col)
+    // {
+    //     if (col.gameObject.CompareTag("Player"))
+    //     {
+    //         _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
+    //     }
+    // }
 
-    private void OnCollisionExit2D(Collision2D col)
-    {
-        if (col.gameObject.CompareTag("Player"))
-        {
-            _rb.constraints = RigidbodyConstraints2D.None;
-        }
-    }
+    // private void OnCollisionExit2D(Collision2D col)
+    // {
+    //     if (col.gameObject.CompareTag("Player"))
+    //     {
+    //         _rb.constraints = RigidbodyConstraints2D.None;
+    //     }
+    // }
 }

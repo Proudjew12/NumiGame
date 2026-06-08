@@ -12,6 +12,7 @@ using UnityEngine;
 ///  Distant background props     →  0.25   loop: false
 ///  Mid-ground islands / trees   →  0.40   loop: false
 ///  Near foreground elements     →  0.60   loop: false
+///  Moon / far celestial object  →  0.97   loop: false  autoScroll: true
 /// ─────────────────────────────────────────────────────────
 /// </summary>
 public class ParallaxLayer : MonoBehaviour
@@ -27,6 +28,13 @@ public class ParallaxLayer : MonoBehaviour
 
     [Tooltip("Extra tile padding each side. Raise to 2 if seams show when zoomed out.")]
     public int extraTiles = 1;
+
+    [Header("Auto Scroll")]
+    [Tooltip("Enable for objects like the moon to give a slow alive drift across the sky.")]
+    public bool autoScroll = false;
+
+    [Tooltip("How fast the object drifts on its own. Try 0.5 to 2.")]
+    public float autoScrollSpeed = 1f;
 
     [Header("Camera")]
     [Tooltip("Drag your PlayerCamera here. Parallax only runs when this is Camera.main.")]
@@ -69,6 +77,11 @@ public class ParallaxLayer : MonoBehaviour
 
         // Move the layer by the parallax portion of the camera's movement
         _originX += delta * parallaxFactor;
+
+        // Slowly drift on its own (e.g. moon gliding across the sky)
+        if (autoScroll)
+            _originX += Time.deltaTime * autoScrollSpeed;
+
         _t.position = new Vector3(_originX, _t.position.y, _t.position.z);
 
         // Seamless looping
