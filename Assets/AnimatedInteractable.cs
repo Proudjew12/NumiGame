@@ -33,12 +33,19 @@ public class AnimatedInteractable : MonoBehaviour
     [Tooltip("How long the player can idle between groups before the puzzle resets")]
     [SerializeField] private float idleResetDuration = 4f;
 
-    [Header("Audio")]
+    [Header("Bell Audio")]
     [SerializeField] private AudioClip[] bellSounds;
     [SerializeField, Range(0f, 1f)] private float bellSoundVolume = 1f;
     [SerializeField] private AudioMixerGroup bellSoundOutput;
     [SerializeField] private AudioSource bellAudioSource;
     [SerializeField, Range(0f, 1f)] private float bellSoundSpatialBlend = 0.15f;
+
+    [Header("Fail Audio")]
+    [SerializeField] private AudioClip[] failSounds;
+    [SerializeField, Range(0f, 1f)] private float failSoundVolume = 1f;
+    [SerializeField] private AudioMixerGroup failSoundOutput;
+    [SerializeField] private AudioSource failAudioSource;
+    [SerializeField, Range(0f, 1f)] private float failSoundSpatialBlend = 0.15f;
 
     // Step 0: 4 taps → island1 drops
     // Step 1: 2 taps → island2 drops
@@ -65,6 +72,7 @@ public class AnimatedInteractable : MonoBehaviour
     void Start()
     {
         ConfigureBellAudioSource();
+        ConfigureFailAudioSource();
         spriteOutline = GetComponent<SpriteOutline>();
         stepIslands = new Transform[] { island1, island2, island4, island5 };
 
@@ -194,44 +202,69 @@ public class AnimatedInteractable : MonoBehaviour
 
     private void PlayBellSound()
     {
-        if (bellSounds == null || bellSounds.Length == 0)
-        {
-            return;
-        }
+        if (bellSounds == null || bellSounds.Length == 0) return;
 
         ConfigureBellAudioSource();
-
-        if (bellAudioSource == null)
-        {
-            return;
-        }
+        if (bellAudioSource == null) return;
 
         var clip = bellSounds[Random.Range(0, bellSounds.Length)];
-        if (clip == null)
-        {
-            return;
-        }
+        if (clip == null) return;
 
         bellAudioSource.pitch = 1f;
         bellAudioSource.PlayOneShot(clip, bellSoundVolume);
     }
 
+    private void PlayFailSound()
+    {
+        if (failSounds == null || failSounds.Length == 0) return;
+
+        ConfigureFailAudioSource();
+        if (failAudioSource == null) return;
+
+        var clip = failSounds[Random.Range(0, failSounds.Length)];
+        if (clip == null) return;
+
+        failAudioSource.pitch = 1f;
+        failAudioSource.PlayOneShot(clip, failSoundVolume);
+    }
+
     private void ConfigureBellAudioSource()
     {
         if (bellAudioSource == null)
-        {
             bellAudioSource = GetComponent<AudioSource>();
-        }
 
         if (bellAudioSource == null)
-        {
             bellAudioSource = gameObject.AddComponent<AudioSource>();
-        }
 
         bellAudioSource.playOnAwake = false;
         bellAudioSource.loop = false;
         bellAudioSource.spatialBlend = bellSoundSpatialBlend;
         bellAudioSource.outputAudioMixerGroup = bellSoundOutput;
+    }
+
+    private void ConfigureFailAudioSource()
+    {
+        if (failAudioSource == null)
+        {
+            // Try to find a second AudioSource on the object; if none, add one
+            var sources = GetComponents<AudioSource>();
+            foreach (var src in sources)
+            {
+                if (src != bellAudioSource)
+                {
+                    failAudioSource = src;
+                    break;
+                }
+            }
+        }
+
+        if (failAudioSource == null)
+            failAudioSource = gameObject.AddComponent<AudioSource>();
+
+        failAudioSource.playOnAwake = false;
+        failAudioSource.loop = false;
+        failAudioSource.spatialBlend = failSoundSpatialBlend;
+        failAudioSource.outputAudioMixerGroup = failSoundOutput;
     }
 
     private IEnumerator DelayedDrop(int stepIndex)
@@ -254,6 +287,7 @@ public class AnimatedInteractable : MonoBehaviour
     private void ResetPuzzle()
     {
         StopAllCoroutines();
+        PlayFailSound();
         StartCoroutine(ShakeObject());
 
         for (int i = 0; i < stepIslands.Length; i++)

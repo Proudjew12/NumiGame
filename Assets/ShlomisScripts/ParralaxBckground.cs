@@ -22,6 +22,14 @@ public class ParallaxLayer : MonoBehaviour
     [Tooltip("0 = glued to camera  |  1 = fixed in world\nCloser layers = higher value.")]
     public float parallaxFactor = 0.2f;
 
+    [Header("Y Axis Parallax")]
+    [Tooltip("Enable vertical parallax (useful for up/down camera movement).")]
+    public bool enableYParallax = false;
+
+    [Range(0f, 1f)]
+    [Tooltip("0 = glued to camera  |  1 = fixed in world\nIndependent Y parallax strength.")]
+    public float parallaxFactorY = 0.2f;
+
     [Header("Looping")]
     [Tooltip("Enable for tiling sprites (sky, fog). Disable for unique props.")]
     public bool infiniteLoop = true;
@@ -44,8 +52,10 @@ public class ParallaxLayer : MonoBehaviour
 
     private Transform _t;
     private float     _originX;
+    private float     _originY;
     private float     _spriteWidth;
     private float     _lastCamX;
+    private float     _lastCamY;
 
     // ── Unity ──────────────────────────────────────────────────────
 
@@ -53,6 +63,7 @@ public class ParallaxLayer : MonoBehaviour
     {
         _t       = transform;
         _originX = _t.position.x;
+        _originY = _t.position.y;
 
         if (infiniteLoop)
         {
@@ -62,7 +73,10 @@ public class ParallaxLayer : MonoBehaviour
         }
 
         if (playerCamera != null)
+        {
             _lastCamX = playerCamera.transform.position.x;
+            _lastCamY = playerCamera.transform.position.y;
+        }
     }
 
     void LateUpdate()
@@ -71,9 +85,11 @@ public class ParallaxLayer : MonoBehaviour
         if (playerCamera == null || Camera.main != playerCamera)
             return;
 
-        float camX = playerCamera.transform.position.x;
+        float camX  = playerCamera.transform.position.x;
+        float camY  = playerCamera.transform.position.y;
         float delta = camX - _lastCamX;
         _lastCamX = camX;
+        _lastCamY = camY;
 
         // Move the layer by the parallax portion of the camera's movement
         _originX += delta * parallaxFactor;
@@ -82,9 +98,14 @@ public class ParallaxLayer : MonoBehaviour
         if (autoScroll)
             _originX += Time.deltaTime * autoScrollSpeed;
 
-        _t.position = new Vector3(_originX, _t.position.y, _t.position.z);
+        // Y parallax — moves independently from camera's vertical position
+        float newY = enableYParallax
+            ? _originY + (camY * (1f - parallaxFactorY))
+            : _t.position.y;
 
-        // Seamless looping
+        _t.position = new Vector3(_originX, newY, _t.position.z);
+
+        // Seamless looping (X only)
         if (infiniteLoop && _spriteWidth > 0f)
         {
             float boundary = _spriteWidth * (1 + extraTiles);
