@@ -1,20 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Parallax only runs when the assigned PlayerCamera is the active Camera.main.
-/// During any other camera (cutscene, zoom-out, etc.) the layer freezes in place.
-///
-/// RECOMMENDED FACTOR VALUES:
-/// ─────────────────────────────────────────────────────────
-///  Sky / solid backdrop         →  0.05   loop: true
-///  Far haze / atmosphere        →  0.10   loop: true
-///  Fog / cloud layers           →  0.15   loop: true
-///  Distant background props     →  0.25   loop: false
-///  Mid-ground islands / trees   →  0.40   loop: false
-///  Near foreground elements     →  0.60   loop: false
-///  Moon / far celestial object  →  0.97   loop: false  autoScroll: true
-/// ─────────────────────────────────────────────────────────
-/// </summary>
 public class ParallaxLayer : MonoBehaviour
 {
     [Header("Parallax")]
@@ -44,6 +29,13 @@ public class ParallaxLayer : MonoBehaviour
     [Tooltip("How fast the object drifts on its own. Try 0.5 to 2.")]
     public float autoScrollSpeed = 1f;
 
+    [Header("Follow Target")]
+    [Tooltip("If enabled, parallax follows the Player transform instead of the camera.")]
+    public bool followPlayer = false;
+
+    [Tooltip("Drag the Player transform here when followPlayer is enabled.")]
+    public Transform playerTransform;
+
     [Header("Camera")]
     [Tooltip("Drag your PlayerCamera here. Parallax only runs when this is Camera.main.")]
     public Camera playerCamera;
@@ -54,7 +46,7 @@ public class ParallaxLayer : MonoBehaviour
     private float     _originX;
     private float     _originY;
     private float     _spriteWidth;
-    private float     _lastCamX;
+    private float     _lastTrackedX;
     private float     _lastCamY;
 
     // ── Unity ──────────────────────────────────────────────────────
@@ -72,42 +64,40 @@ public class ParallaxLayer : MonoBehaviour
             else            infiniteLoop = false;
         }
 
+        // Seed the last position from whichever target we follow
+        _lastTrackedX = GetTrackedX();
+
         if (playerCamera != null)
-        {
-            _lastCamX = playerCamera.transform.position.x;
             _lastCamY = playerCamera.transform.position.y;
-        }
     }
 
     void LateUpdate()
     {
-        // Do nothing if the player camera is not the active camera
         if (playerCamera == null || Camera.main != playerCamera)
             return;
 
-        float camX  = playerCamera.transform.position.x;
-        float camY  = playerCamera.transform.position.y;
-        float delta = camX - _lastCamX;
-        _lastCamX = camX;
-        _lastCamY = camY;
+        float trackedX = GetTrackedX();
+        float camY     = playerCamera.transform.position.y;
+        float camX     = playerCamera.transform.position.x;
 
-        // Move the layer by the parallax portion of the camera's movement
+        float delta   = trackedX - _lastTrackedX;
+        _lastTrackedX = trackedX;
+        _lastCamY     = camY;
+
         _originX += delta * parallaxFactor;
 
-        // Slowly drift on its own (e.g. moon gliding across the sky)
         if (autoScroll)
             _originX += Time.deltaTime * autoScrollSpeed;
 
-        // Y parallax — moves independently from camera's vertical position
         float newY = enableYParallax
             ? _originY + (camY * (1f - parallaxFactorY))
             : _t.position.y;
 
         _t.position = new Vector3(_originX, newY, _t.position.z);
 
-        // Seamless looping (X only)
         if (infiniteLoop && _spriteWidth > 0f)
         {
+            // Looping always uses camera position as the viewport anchor
             float boundary = _spriteWidth * (1 + extraTiles);
             float drift    = camX * (1f - parallaxFactor);
 
@@ -116,6 +106,14 @@ public class ParallaxLayer : MonoBehaviour
             else if (drift < _originX - boundary)
                 _originX -= boundary;
         }
+    }
+
+    private float GetTrackedX()
+    {
+        if (followPlayer && playerTransform != null)
+            return playerTransform.position.x;
+
+        return playerCamera != null ? playerCamera.transform.position.x : 0f;
     }
 
 #if UNITY_EDITOR

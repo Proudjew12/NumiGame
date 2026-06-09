@@ -2,17 +2,27 @@ using UnityEngine;
 
 public class OutlinePopup : MonoBehaviour
 {
-    [Header("Popup Settings")]
+    [Header("Popup Mode")]
+    [Tooltip("Use a Prefab (with lights, colliders, etc.) instead of a plain sprite.")]
+    public bool usePrefab = false;
+
+    [Header("Sprite Popup (usePrefab = false)")]
     public Sprite popupSprite;
+
+    [Header("Prefab Popup (usePrefab = true)")]
+    [Tooltip("Drag your popup prefab here (can contain lights, sprites, etc.)")]
+    public GameObject popupPrefab;
+
+    [Header("Shared Settings")]
     public Vector3 popupOffset = new Vector3(0, 1.5f, 0);
     public float fadeSpeed = 5f;
 
-    [Header("Sorting")]
+    [Header("Sorting (Sprite mode only)")]
     public string sortingLayerName = "Default";
     public int sortingOrder = 0;
 
     private GameObject popupInstance;
-    private SpriteRenderer popupRenderer;
+    private SpriteRenderer popupRenderer; // only used in sprite mode
     private SpriteOutline selfOutline;
     private SpriteOutline parentOutline;
     private SpriteOutline[] childOutlines;
@@ -30,19 +40,31 @@ public class OutlinePopup : MonoBehaviour
 
     void SpawnPopup()
     {
-        if (popupSprite == null) return;
+        if (usePrefab)
+        {
+            if (popupPrefab == null) return;
 
-        popupInstance = new GameObject("OutlinePopup");
-        popupInstance.transform.position = transform.position + popupOffset;
+            popupInstance = Instantiate(popupPrefab, transform.position + popupOffset, Quaternion.identity);
 
-        popupRenderer = popupInstance.AddComponent<SpriteRenderer>();
-        popupRenderer.sprite = popupSprite;
-        popupRenderer.sortingLayerName = sortingLayerName;
-        popupRenderer.sortingOrder = sortingOrder;
+            // Start hidden — disable the whole object
+            popupInstance.SetActive(false);
+        }
+        else
+        {
+            if (popupSprite == null) return;
 
-        Color c = popupRenderer.color;
-        c.a = 0f;
-        popupRenderer.color = c;
+            popupInstance = new GameObject("OutlinePopup");
+            popupInstance.transform.position = transform.position + popupOffset;
+
+            popupRenderer = popupInstance.AddComponent<SpriteRenderer>();
+            popupRenderer.sprite = popupSprite;
+            popupRenderer.sortingLayerName = sortingLayerName;
+            popupRenderer.sortingOrder = sortingOrder;
+
+            Color c = popupRenderer.color;
+            c.a = 0f;
+            popupRenderer.color = c;
+        }
     }
 
     bool IsAnyOutlineActive()
@@ -56,15 +78,27 @@ public class OutlinePopup : MonoBehaviour
 
     void Update()
     {
-        if (popupRenderer == null) return;
+        if (popupInstance == null) return;
 
         popupInstance.transform.position = transform.position + popupOffset;
 
-        float targetAlpha = IsAnyOutlineActive() ? 1f : 0f;
+        bool outlineActive = IsAnyOutlineActive();
 
-        Color c = popupRenderer.color;
-        c.a = Mathf.Lerp(c.a, targetAlpha, Time.deltaTime * fadeSpeed);
-        popupRenderer.color = c;
+        if (usePrefab)
+        {
+            // Prefab mode: just toggle active
+            popupInstance.SetActive(outlineActive);
+        }
+        else
+        {
+            if (popupRenderer == null) return;
+
+            // Sprite mode: fade alpha as before
+            float targetAlpha = outlineActive ? 1f : 0f;
+            Color c = popupRenderer.color;
+            c.a = Mathf.Lerp(c.a, targetAlpha, Time.deltaTime * fadeSpeed);
+            popupRenderer.color = c;
+        }
     }
 
     void OnDestroy()
