@@ -78,8 +78,7 @@ public class ShakingPlatform2D : MonoBehaviour
         // ── Phase 1: shaking ──────────────────────────────────────
         timer += Time.deltaTime;
 
-        float progress  = Mathf.Clamp01(timer / timeBeforeFall);
-        float intensity = shakeMagnitude * progress;
+      float intensity = shakeMagnitude;
 
         transform.position = (Vector3)(originalPosition + new Vector2(
             Mathf.Sin(Time.time * shakeSpeed) * intensity, 0f));
