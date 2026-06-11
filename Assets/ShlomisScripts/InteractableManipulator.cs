@@ -9,7 +9,7 @@ public class InteractableManipulator : MonoBehaviour
     [SerializeField] private CinemachineCamera playerCamera;
 
     [Header("Focus Collider Trigger")]
-    [SerializeField] private Collider2D targetCollider; // Assign the other object's collider here
+    [SerializeField] private Collider2D targetCollider;
 
     [Header("Move")]
     [SerializeField] private float moveSpeed = 3f;
@@ -27,11 +27,15 @@ public class InteractableManipulator : MonoBehaviour
     [SerializeField] private float snapSpeed = 8f;
     [SerializeField] private bool instantSnap = false;
 
+    [Header("Snap Back Scale")]
+    [Tooltip("The scale the object returns to after snapping back.")]
+    [SerializeField] private float snapBackScale = 1f;
+
     public Transform originPoint;
 
     private bool _isSnappingBack = false;
     private Rigidbody2D _rb;
-    private bool _wasFocused = false; // tracks previous focus state
+    private bool _wasFocused = false;
 
     private bool IsControlled => playerCamera != null && playerCamera.Follow == transform;
 
@@ -104,24 +108,19 @@ public class InteractableManipulator : MonoBehaviour
         }
     }
 
-    // Enables the target collider when focused, disables it when focus is lost
-  private void HandleFocusColliderToggle()
-{
-    if (targetCollider == null) return;
-
-    bool isFocusedNow = IsControlled;
-
-    if (isFocusedNow && !_wasFocused)
+    private void HandleFocusColliderToggle()
     {
-        targetCollider.enabled = false;
-    }
-    else if (!isFocusedNow && _wasFocused)
-    {
-        targetCollider.enabled = true;
-    }
+        if (targetCollider == null) return;
 
-    _wasFocused = isFocusedNow;
-}
+        bool isFocusedNow = IsControlled;
+
+        if (isFocusedNow && !_wasFocused)
+            targetCollider.enabled = false;
+        else if (!isFocusedNow && _wasFocused)
+            targetCollider.enabled = true;
+
+        _wasFocused = isFocusedNow;
+    }
 
     private void SnapBack()
     {
@@ -133,15 +132,7 @@ public class InteractableManipulator : MonoBehaviour
 
         if (instantSnap)
         {
-            transform.position = originPoint.position;
-            transform.localScale = Vector3.one;
-            transform.rotation = Quaternion.identity;
-            _isSnappingBack = false;
-            if (_rb != null && !IsControlled)
-            {
-                _rb.gravityScale = 1f;
-                _rb.linearVelocity = Vector2.zero;
-            }
+            ApplySnapResult();
             return;
         }
 
@@ -153,39 +144,30 @@ public class InteractableManipulator : MonoBehaviour
 
         if (Vector3.Distance(transform.position, originPoint.position) < 0.01f)
         {
-            transform.position = originPoint.position;
-            transform.localScale = Vector3.one;
-            transform.rotation = Quaternion.identity;
-            _isSnappingBack = false;
+            ApplySnapResult();
             StartCoroutine(FlashInstantSnap());
+        }
+    }
+
+    // Applies final position, scale and rotation when snap is complete
+    private void ApplySnapResult()
+    {
+        transform.position = originPoint.position;
+        transform.localScale = Vector3.one * snapBackScale;
+        transform.rotation = Quaternion.identity;
+        _isSnappingBack = false;
+
+        if (_rb != null && !IsControlled)
+        {
+            _rb.gravityScale = 1f;
+            _rb.linearVelocity = Vector2.zero;
         }
     }
 
     private IEnumerator FlashInstantSnap()
     {
         instantSnap = true;
-        if (_rb != null && !IsControlled)
-        {
-            _rb.gravityScale = 1f;
-            _rb.linearVelocity = Vector2.zero;
-        }
         yield return new WaitForEndOfFrame();
         instantSnap = false;
     }
-
-    // private void OnCollisionEnter2D(Collision2D col)
-    // {
-    //     if (col.gameObject.CompareTag("Player"))
-    //     {
-    //         _rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePosition;
-    //     }
-    // }
-
-    // private void OnCollisionExit2D(Collision2D col)
-    // {
-    //     if (col.gameObject.CompareTag("Player"))
-    //     {
-    //         _rb.constraints = RigidbodyConstraints2D.None;
-    //     }
-    // }
 }

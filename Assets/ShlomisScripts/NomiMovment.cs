@@ -21,6 +21,13 @@ public class NomiMovment : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Slope")]
+    [SerializeField] private float slopeCheckDistance = 0.6f;
+    [SerializeField] private float minSlopeAngle = 1f;
+    private bool isOnSlope;
+    private float normalGravityScale;
+    private bool isJumping; // ← NEW
+
     private Vector2 moveDirection;
     private readonly Collider2D[] groundHitsForAudio = new Collider2D[8];
     private Collider2D lastGroundColliderForAudio;
@@ -28,7 +35,6 @@ public class NomiMovment : MonoBehaviour
     [SerializeField] private CinemachineCamera playerCamera;
     [SerializeField] private NomiFootstepAudio footstepAudio;
 
-    // ✅ Track the previous follow target to detect changes
     private Transform lastFollowTarget;
 
     public static NomiMovment instance;
@@ -42,10 +48,7 @@ public class NomiMovment : MonoBehaviour
 
     public bool HasGroundColliderForAudio(Collider2D target)
     {
-        if (target == null || groundCheck == null)
-        {
-            return false;
-        }
+        if (target == null || groundCheck == null) return false;
 
         var hitCount = Physics2D.OverlapCircleNonAlloc(
             groundCheck.position,
@@ -54,12 +57,7 @@ public class NomiMovment : MonoBehaviour
             groundLayer);
 
         for (var i = 0; i < hitCount; i++)
-        {
-            if (groundHitsForAudio[i] == target)
-            {
-                return true;
-            }
-        }
+            if (groundHitsForAudio[i] == target) return true;
 
         return false;
     }
@@ -71,27 +69,44 @@ public class NomiMovment : MonoBehaviour
 
         if (playerCamera != null)
             lastFollowTarget = playerCamera.Follow;
+
+        normalGravityScale = player.gravityScale;
     }
 
     void Update()
     {
         CheckCameraTarget();
 
-        if (!IsPlayerControlled()) return; // ✅ Block movement if camera isn't on player
+        if (!IsPlayerControlled()) return;
 
         moveDirection = ReadMoveInput();
         HandleFlip();
         AnimationHandler();
+        CheckSlope();
     }
 
-    // ✅ Detects when the camera target changes and updates offset + movement lock
+    private void CheckSlope()
+    {
+        RaycastHit2D hit = Physics2D.Raycast(
+            groundCheck.position, Vector2.down, slopeCheckDistance, groundLayer);
+
+        if (hit)
+        {
+            float angle = Vector2.Angle(hit.normal, Vector2.up);
+            isOnSlope = angle > minSlopeAngle;
+        }
+        else
+        {
+            isOnSlope = false;
+        }
+    }
+
     private void CheckCameraTarget()
     {
         if (playerCamera == null) return;
 
         Transform currentTarget = playerCamera.Follow;
-
-        if (currentTarget == lastFollowTarget) return; // No change
+        if (currentTarget == lastFollowTarget) return;
 
         lastFollowTarget = currentTarget;
 
@@ -99,40 +114,29 @@ public class NomiMovment : MonoBehaviour
         if (composer == null) return;
 
         if (currentTarget == this.transform)
-        {
-            // ✅ Camera returned to player — restore offset and allow movement
             composer.TargetOffset = new Vector3(composer.TargetOffset.x, 3f, composer.TargetOffset.z);
-        }
         else
-        {
-            // ✅ Camera moved away from player — zero Y offset and block movement
             composer.TargetOffset = new Vector3(composer.TargetOffset.x, 0f, composer.TargetOffset.z);
-        }
     }
 
-    // ✅ Returns true only when the camera is following the player
     private bool IsPlayerControlled()
     {
-        if (playerCamera == null) return true; // Fail open if no camera assigned
+        if (playerCamera == null) return true;
         return playerCamera.Follow == this.transform;
     }
 
-    private void OnEnable()
-    {
-        SubscribeAction(jump, Jump);
-    }
-
-    private void OnDisable()
-    {
-        UnsubscribeAction(jump, Jump);
-    }
+    private void OnEnable()  => SubscribeAction(jump, Jump);
+    private void OnDisable() => UnsubscribeAction(jump, Jump);
 
     private void Jump(InputAction.CallbackContext _)
     {
-        if (!IsPlayerControlled()) return; // ✅ Block jump if camera isn't on player
+        if (!IsPlayerControlled()) return;
 
         if (IsGrounded())
         {
+            player.gravityScale = normalGravityScale;
+            isJumping = true; // ← set flag before adding force
+
             player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
             player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             animator.SetTrigger("Jump");
@@ -144,23 +148,23 @@ public class NomiMovment : MonoBehaviour
     private void FindAudioReferences()
     {
         if (footstepAudio == null)
-        {
             footstepAudio = GetComponent<NomiFootstepAudio>();
-        }
     }
 
     private bool IsGrounded()
     {
-        return groundCheck != null && Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        return groundCheck != null &&
+               Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
     }
 
     private Collider2D GetGroundCollider()
     {
-        var groundCollider = groundCheck != null ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer) : null;
+        var groundCollider = groundCheck != null
+            ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer)
+            : null;
+
         if (groundCollider != null)
-        {
             lastGroundColliderForAudio = groundCollider;
-        }
 
         return groundCollider;
     }
@@ -174,16 +178,14 @@ public class NomiMovment : MonoBehaviour
         }
     }
 
-    public void AnimationHandler()
-    {
-        animator.SetBool("Grounded2", IsGrounded());
-        animator.SetBool("IsFalling", IsFalling());
-    }
+   public void AnimationHandler()
+{
+    animator.SetBool("Grounded2", IsGrounded());
+    animator.SetBool("IsFalling", IsFalling());
+    animator.SetFloat("Speed", Mathf.Abs(moveDirection.x)); // ← add this
+}
 
-    private bool IsFalling()
-    {
-        return player.linearVelocity.y < -0.1f;
-    }
+    private bool IsFalling() => player.linearVelocity.y < -0.1f;
 
     private void HandleFlip()
     {
@@ -197,9 +199,26 @@ public class NomiMovment : MonoBehaviour
     {
         if (!IsPlayerControlled())
         {
-            // ✅ Stop horizontal movement when camera is not on player
             player.linearVelocity = new Vector2(0f, player.linearVelocity.y);
             return;
+        }
+
+        // Clear jump flag once we're airborne
+        if (isJumping && !IsGrounded())
+            isJumping = false;
+
+        bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f;
+
+        // Slope lock: only when idle, grounded, on slope, and NOT jumping
+        if (isOnSlope && IsGrounded() && !isMoving && !isJumping)
+        {
+            player.gravityScale = 0f;
+            player.linearVelocity = Vector2.zero;
+            return;
+        }
+        else
+        {
+            player.gravityScale = normalGravityScale;
         }
 
         player.linearVelocity = new Vector2(moveDirection.x * speed, player.linearVelocity.y);
@@ -218,13 +237,11 @@ public class NomiMovment : MonoBehaviour
 
     private static void SubscribeAction(InputActionReference actionReference, System.Action<InputAction.CallbackContext> callback)
     {
-        if (actionReference != null)
-            actionReference.action.started += callback;
+        if (actionReference != null) actionReference.action.started += callback;
     }
 
     private static void UnsubscribeAction(InputActionReference actionReference, System.Action<InputAction.CallbackContext> callback)
     {
-        if (actionReference != null)
-            actionReference.action.started -= callback;
+        if (actionReference != null) actionReference.action.started -= callback;
     }
 }
