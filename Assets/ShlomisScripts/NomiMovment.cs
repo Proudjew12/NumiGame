@@ -26,11 +26,14 @@ public class NomiMovment : MonoBehaviour
     [SerializeField] private float minSlopeAngle = 1f;
     private bool isOnSlope;
     private float normalGravityScale;
-    private bool isJumping; // ← NEW
+    private bool isJumping;
 
     private Vector2 moveDirection;
     private readonly Collider2D[] groundHitsForAudio = new Collider2D[8];
     private Collider2D lastGroundColliderForAudio;
+    private Collider2D[] playerColliders;
+    private Vector2 platformCarryVelocity;
+    private float platformCarryUntilTime;
 
     [SerializeField] private CinemachineCamera playerCamera;
     [SerializeField] private NomiFootstepAudio footstepAudio;
@@ -38,6 +41,20 @@ public class NomiMovment : MonoBehaviour
     private Transform lastFollowTarget;
 
     public static NomiMovment instance;
+
+    public Transform GroundCheck => groundCheck;
+    public float GroundCheckRadius => groundCheckRadius;
+    public LayerMask GroundLayer => groundLayer;
+    public Collider2D[] SolidColliders
+    {
+        get
+        {
+            if (playerColliders == null || playerColliders.Length == 0)
+                CachePlayerColliders();
+
+            return playerColliders;
+        }
+    }
 
     public bool IsGroundedForAudio => IsGrounded();
     public bool IsPlayerControlledForAudio => IsPlayerControlled();
@@ -47,6 +64,16 @@ public class NomiMovment : MonoBehaviour
     public Collider2D LastGroundColliderForAudio => lastGroundColliderForAudio;
 
     public bool HasGroundColliderForAudio(Collider2D target)
+    {
+        return IsStandingOn(target);
+    }
+
+    private void Awake()
+    {
+        CachePlayerColliders();
+    }
+
+    public bool IsStandingOn(Collider2D target)
     {
         if (target == null || groundCheck == null) return false;
 
@@ -66,11 +93,31 @@ public class NomiMovment : MonoBehaviour
     {
         instance = this;
         FindAudioReferences();
+        CachePlayerColliders();
 
         if (playerCamera != null)
             lastFollowTarget = playerCamera.Follow;
 
         normalGravityScale = player.gravityScale;
+    }
+
+    public void MoveWithPlatform(Vector2 targetPosition, float deltaTime)
+    {
+        if (player == null) return;
+
+        Vector2 delta = targetPosition - player.position;
+        platformCarryVelocity = deltaTime > 0f ? delta / deltaTime : Vector2.zero;
+        platformCarryUntilTime = Time.fixedTime + Mathf.Max(Time.fixedDeltaTime * 2f, 0.02f);
+
+        player.gravityScale = 0f;
+        player.linearVelocity = platformCarryVelocity;
+        player.MovePosition(targetPosition);
+    }
+
+    public void ClearPlatformCarry()
+    {
+        platformCarryVelocity = Vector2.zero;
+        platformCarryUntilTime = 0f;
     }
 
     void Update()
@@ -135,7 +182,7 @@ public class NomiMovment : MonoBehaviour
         if (IsGrounded())
         {
             player.gravityScale = normalGravityScale;
-            isJumping = true; // ← set flag before adding force
+            isJumping = true;
 
             player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
             player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
@@ -178,12 +225,12 @@ public class NomiMovment : MonoBehaviour
         }
     }
 
-   public void AnimationHandler()
-{
-    animator.SetBool("Grounded2", IsGrounded());
-    animator.SetBool("IsFalling", IsFalling());
-    animator.SetFloat("Speed", Mathf.Abs(moveDirection.x)); // ← add this
-}
+    public void AnimationHandler()
+    {
+        animator.SetBool("Grounded2", IsGrounded());
+        animator.SetBool("IsFalling", IsFalling());
+        animator.SetFloat("Speed", Mathf.Abs(moveDirection.x));
+    }
 
     private bool IsFalling() => player.linearVelocity.y < -0.1f;
 
@@ -197,19 +244,25 @@ public class NomiMovment : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (IsBeingCarriedByPlatform())
+        {
+            player.gravityScale = 0f;
+            player.linearVelocity = platformCarryVelocity;
+            return;
+        }
+
         if (!IsPlayerControlled())
         {
+            player.gravityScale = normalGravityScale;
             player.linearVelocity = new Vector2(0f, player.linearVelocity.y);
             return;
         }
 
-        // Clear jump flag once we're airborne
         if (isJumping && !IsGrounded())
             isJumping = false;
 
         bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f;
 
-        // Slope lock: only when idle, grounded, on slope, and NOT jumping
         if (isOnSlope && IsGrounded() && !isMoving && !isJumping)
         {
             player.gravityScale = 0f;
@@ -243,5 +296,17 @@ public class NomiMovment : MonoBehaviour
     private static void UnsubscribeAction(InputActionReference actionReference, System.Action<InputAction.CallbackContext> callback)
     {
         if (actionReference != null) actionReference.action.started -= callback;
+    }
+
+    private bool IsBeingCarriedByPlatform()
+    {
+        return platformCarryUntilTime > 0f && Time.fixedTime <= platformCarryUntilTime;
+    }
+
+    private void CachePlayerColliders()
+    {
+        playerColliders = player != null
+            ? player.GetComponentsInChildren<Collider2D>(true)
+            : GetComponentsInChildren<Collider2D>(true);
     }
 }
