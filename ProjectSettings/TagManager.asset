@@ -12,6 +12,7 @@ TagManager:
   - WheelGround
   - Reset
   - Bench
+  - Bell
   layers:
   - Default
   - TransparentFX
