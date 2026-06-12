@@ -32,8 +32,14 @@ public class NomiMovment : MonoBehaviour
     private readonly Collider2D[] groundHitsForAudio = new Collider2D[8];
     private Collider2D lastGroundColliderForAudio;
     private Collider2D[] playerColliders;
-    private Vector2 platformCarryVelocity;
-    private float platformCarryUntilTime;
+
+    // Platform carry
+    private Transform _carryParent;
+    // Offset stored in the platform's LOCAL space so it automatically
+    // scales and moves with the platform every frame — no drift when
+    // the stone grows or shrinks.
+    private Vector2 _carryOffsetLocal;
+    private float   _carryUntilTime;
 
     [SerializeField] private CinemachineCamera playerCamera;
     [SerializeField] private NomiFootstepAudio footstepAudio;
@@ -42,48 +48,39 @@ public class NomiMovment : MonoBehaviour
 
     public static NomiMovment instance;
 
-    public Transform GroundCheck => groundCheck;
-    public float GroundCheckRadius => groundCheckRadius;
-    public LayerMask GroundLayer => groundLayer;
+    public Transform  GroundCheck       => groundCheck;
+    public float      GroundCheckRadius => groundCheckRadius;
+    public LayerMask  GroundLayer       => groundLayer;
+
     public Collider2D[] SolidColliders
     {
         get
         {
             if (playerColliders == null || playerColliders.Length == 0)
                 CachePlayerColliders();
-
             return playerColliders;
         }
     }
 
-    public bool IsGroundedForAudio => IsGrounded();
-    public bool IsPlayerControlledForAudio => IsPlayerControlled();
-    public float HorizontalInputForAudio => IsPlayerControlled() ? moveDirection.x : 0f;
-    public float HorizontalSpeedForAudio => player != null ? Mathf.Abs(player.linearVelocity.x) : 0f;
-    public Collider2D GroundColliderForAudio => GetGroundCollider();
+    public bool       IsGroundedForAudio         => IsGrounded();
+    public bool       IsPlayerControlledForAudio => IsPlayerControlled();
+    public float      HorizontalInputForAudio    => IsPlayerControlled() ? moveDirection.x : 0f;
+    public float      HorizontalSpeedForAudio    => player != null ? Mathf.Abs(player.linearVelocity.x) : 0f;
+    public Collider2D GroundColliderForAudio     => GetGroundCollider();
     public Collider2D LastGroundColliderForAudio => lastGroundColliderForAudio;
 
-    public bool HasGroundColliderForAudio(Collider2D target)
-    {
-        return IsStandingOn(target);
-    }
+    public bool HasGroundColliderForAudio(Collider2D target) => IsStandingOn(target);
 
-    private void Awake()
-    {
-        CachePlayerColliders();
-    }
+    private void Awake() => CachePlayerColliders();
 
     public bool IsStandingOn(Collider2D target)
     {
         if (target == null || groundCheck == null) return false;
 
-        var hitCount = Physics2D.OverlapCircleNonAlloc(
-            groundCheck.position,
-            groundCheckRadius,
-            groundHitsForAudio,
-            groundLayer);
+        int hitCount = Physics2D.OverlapCircleNonAlloc(
+            groundCheck.position, groundCheckRadius, groundHitsForAudio, groundLayer);
 
-        for (var i = 0; i < hitCount; i++)
+        for (int i = 0; i < hitCount; i++)
             if (groundHitsForAudio[i] == target) return true;
 
         return false;
@@ -101,23 +98,57 @@ public class NomiMovment : MonoBehaviour
         normalGravityScale = player.gravityScale;
     }
 
-    public void MoveWithPlatform(Vector2 targetPosition, float deltaTime)
+    // Called every FixedUpdate by InteractableManipulator while the player
+    // is standing on the platform.
+    public void AttachToPlatform(Transform platformTransform)
     {
-        if (player == null) return;
+        if (player == null || platformTransform == null) return;
 
-        Vector2 delta = targetPosition - player.position;
-        platformCarryVelocity = deltaTime > 0f ? delta / deltaTime : Vector2.zero;
-        platformCarryUntilTime = Time.fixedTime + Mathf.Max(Time.fixedDeltaTime * 2f, 0.02f);
+        bool alreadyAttached = _carryParent == platformTransform;
 
-        player.gravityScale = 0f;
-        player.linearVelocity = platformCarryVelocity;
-        player.MovePosition(targetPosition);
+        _carryParent    = platformTransform;
+        _carryUntilTime = Time.time + 0.15f;
+
+        if (!alreadyAttached)
+        {
+            // Convert the player's world position into the platform's local space.
+            // When the stone scales up/down, InverseTransformPoint accounts for
+            // that scale, so the stored offset stays proportionally correct.
+            _carryOffsetLocal = platformTransform.InverseTransformPoint(player.position);
+
+            player.bodyType       = RigidbodyType2D.Kinematic;
+            player.linearVelocity = Vector2.zero;
+            player.gravityScale   = 0f;
+        }
     }
 
     public void ClearPlatformCarry()
     {
-        platformCarryVelocity = Vector2.zero;
-        platformCarryUntilTime = 0f;
+        if (_carryParent == null) return;
+
+        _carryParent    = null;
+        _carryUntilTime = 0f;
+
+        if (player != null)
+        {
+            player.bodyType       = RigidbodyType2D.Dynamic;
+            player.gravityScale   = normalGravityScale;
+            player.linearVelocity = Vector2.zero;
+        }
+    }
+
+    // Kept for backwards compatibility — no longer does anything.
+    public void MoveWithPlatform(Vector2 targetPosition, float deltaTime) { }
+
+    // Called by InteractableManipulator to flip the player to face the
+    // direction the stone is moving, even when the camera is on the stone
+    // and the player is not directly controlled.
+    public void SetFacingFromPlatformInput(float horizontalInput)
+    {
+        if (horizontalInput > 0.01f)
+            transform.localScale = new Vector3( 0.85f, 0.85f, 0.85f);
+        else if (horizontalInput < -0.01f)
+            transform.localScale = new Vector3(-0.85f, 0.85f, 0.85f);
     }
 
     void Update()
@@ -128,8 +159,61 @@ public class NomiMovment : MonoBehaviour
 
         moveDirection = ReadMoveInput();
         HandleFlip();
+
+        if (IsBeingCarriedByPlatform())
+        {
+            animator.SetBool("Grounded2", true);
+            animator.SetBool("IsFalling", false);
+            animator.SetFloat("Speed", 0f);
+            return;
+        }
+
         AnimationHandler();
         CheckSlope();
+    }
+
+    void FixedUpdate()
+    {
+        if (_carryParent != null)
+        {
+            if (Time.time <= _carryUntilTime)
+            {
+                // Convert the stored local-space offset back to world space.
+                // TransformPoint applies the platform's current position, rotation,
+                // AND scale — so if the stone grew, the player sits proportionally
+                // higher/further, perfectly tracking the surface.
+                Vector2 targetPos = _carryParent.TransformPoint(_carryOffsetLocal);
+                player.position       = targetPos;
+                player.linearVelocity = Vector2.zero;
+                return;
+            }
+            else
+            {
+                ClearPlatformCarry();
+            }
+        }
+
+        if (!IsPlayerControlled())
+        {
+            player.gravityScale   = normalGravityScale;
+            player.linearVelocity = new Vector2(0f, player.linearVelocity.y);
+            return;
+        }
+
+        if (isJumping && !IsGrounded())
+            isJumping = false;
+
+        bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f;
+
+        if (isOnSlope && IsGrounded() && !isMoving && !isJumping)
+        {
+            player.gravityScale   = 0f;
+            player.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        player.gravityScale   = normalGravityScale;
+        player.linearVelocity = new Vector2(moveDirection.x * speed, player.linearVelocity.y);
     }
 
     private void CheckSlope()
@@ -137,15 +221,7 @@ public class NomiMovment : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(
             groundCheck.position, Vector2.down, slopeCheckDistance, groundLayer);
 
-        if (hit)
-        {
-            float angle = Vector2.Angle(hit.normal, Vector2.up);
-            isOnSlope = angle > minSlopeAngle;
-        }
-        else
-        {
-            isOnSlope = false;
-        }
+        isOnSlope = hit && Vector2.Angle(hit.normal, Vector2.up) > minSlopeAngle;
     }
 
     private void CheckCameraTarget()
@@ -160,10 +236,9 @@ public class NomiMovment : MonoBehaviour
         var composer = playerCamera.GetComponent<CinemachinePositionComposer>();
         if (composer == null) return;
 
-        if (currentTarget == this.transform)
-            composer.TargetOffset = new Vector3(composer.TargetOffset.x, 3f, composer.TargetOffset.z);
-        else
-            composer.TargetOffset = new Vector3(composer.TargetOffset.x, 0f, composer.TargetOffset.z);
+        composer.TargetOffset = currentTarget == this.transform
+            ? new Vector3(composer.TargetOffset.x, 3f, composer.TargetOffset.z)
+            : new Vector3(composer.TargetOffset.x, 0f, composer.TargetOffset.z);
     }
 
     private bool IsPlayerControlled()
@@ -178,18 +253,19 @@ public class NomiMovment : MonoBehaviour
     private void Jump(InputAction.CallbackContext _)
     {
         if (!IsPlayerControlled()) return;
+        if (!IsGrounded()) return;
 
-        if (IsGrounded())
-        {
-            player.gravityScale = normalGravityScale;
-            isJumping = true;
+        ClearPlatformCarry();
 
-            player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
-            player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            animator.SetTrigger("Jump");
-            FindAudioReferences();
-            footstepAudio?.PlayJumpFromInput();
-        }
+        player.gravityScale   = normalGravityScale;
+        player.bodyType       = RigidbodyType2D.Dynamic;
+        isJumping             = true;
+
+        player.linearVelocity = new Vector2(player.linearVelocity.x, 0f);
+        player.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        animator.SetTrigger("Jump");
+        FindAudioReferences();
+        footstepAudio?.PlayJumpFromInput();
     }
 
     private void FindAudioReferences()
@@ -206,14 +282,12 @@ public class NomiMovment : MonoBehaviour
 
     private Collider2D GetGroundCollider()
     {
-        var groundCollider = groundCheck != null
+        var col = groundCheck != null
             ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer)
             : null;
 
-        if (groundCollider != null)
-            lastGroundColliderForAudio = groundCollider;
-
-        return groundCollider;
+        if (col != null) lastGroundColliderForAudio = col;
+        return col;
     }
 
     private void OnDrawGizmos()
@@ -237,71 +311,28 @@ public class NomiMovment : MonoBehaviour
     private void HandleFlip()
     {
         if (moveDirection.x > 0f)
-            transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+            transform.localScale = new Vector3( 0.85f, 0.85f, 0.85f);
         else if (moveDirection.x < 0f)
             transform.localScale = new Vector3(-0.85f, 0.85f, 0.85f);
     }
 
-    void FixedUpdate()
-    {
-        if (IsBeingCarriedByPlatform())
-        {
-            player.gravityScale = 0f;
-            player.linearVelocity = platformCarryVelocity;
-            return;
-        }
-
-        if (!IsPlayerControlled())
-        {
-            player.gravityScale = normalGravityScale;
-            player.linearVelocity = new Vector2(0f, player.linearVelocity.y);
-            return;
-        }
-
-        if (isJumping && !IsGrounded())
-            isJumping = false;
-
-        bool isMoving = Mathf.Abs(moveDirection.x) > 0.1f;
-
-        if (isOnSlope && IsGrounded() && !isMoving && !isJumping)
-        {
-            player.gravityScale = 0f;
-            player.linearVelocity = Vector2.zero;
-            return;
-        }
-        else
-        {
-            player.gravityScale = normalGravityScale;
-        }
-
-        player.linearVelocity = new Vector2(moveDirection.x * speed, player.linearVelocity.y);
-    }
-
     private Vector2 ReadMoveInput()
     {
-        float actionHorizontal = Mathf.Clamp(ReadVectorAction(move).x, -1f, 1f);
-        return new Vector2(actionHorizontal, 0f);
+        float h = Mathf.Clamp(ReadVectorAction(move).x, -1f, 1f);
+        return new Vector2(h, 0f);
     }
 
-    private static Vector2 ReadVectorAction(InputActionReference actionReference)
-    {
-        return actionReference == null ? Vector2.zero : actionReference.action.ReadValue<Vector2>();
-    }
+    private static Vector2 ReadVectorAction(InputActionReference r) =>
+        r == null ? Vector2.zero : r.action.ReadValue<Vector2>();
 
-    private static void SubscribeAction(InputActionReference actionReference, System.Action<InputAction.CallbackContext> callback)
-    {
-        if (actionReference != null) actionReference.action.started += callback;
-    }
+    private static void SubscribeAction(InputActionReference r, System.Action<InputAction.CallbackContext> cb)
+    { if (r != null) r.action.started += cb; }
 
-    private static void UnsubscribeAction(InputActionReference actionReference, System.Action<InputAction.CallbackContext> callback)
-    {
-        if (actionReference != null) actionReference.action.started -= callback;
-    }
+    private static void UnsubscribeAction(InputActionReference r, System.Action<InputAction.CallbackContext> cb)
+    { if (r != null) r.action.started -= cb; }
 
-    private bool IsBeingCarriedByPlatform()
-    {
-        return platformCarryUntilTime > 0f && Time.fixedTime <= platformCarryUntilTime;
-    }
+    private bool IsBeingCarriedByPlatform() =>
+        _carryParent != null && Time.time <= _carryUntilTime;
 
     private void CachePlayerColliders()
     {

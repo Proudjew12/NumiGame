@@ -10,6 +10,8 @@ public class InteractableManipulator : MonoBehaviour
 
     [Header("Focus Collider Trigger")]
     [SerializeField] private Collider2D targetCollider;
+    [Tooltip("All colliders on the target object (e.g. the bench) to ignore while this object is being manipulated. Drag every collider from the bench here.")]
+    [SerializeField] private Collider2D[] targetObjectColliders;
 
     [Header("Move")]
     [SerializeField] private float moveSpeed = 3f;
@@ -18,8 +20,6 @@ public class InteractableManipulator : MonoBehaviour
     [Header("Player Carry")]
     [Tooltip("When enabled, a player standing on this object will move with it.")]
     [SerializeField] private bool moveStandingPlayerWithObject = false;
-    [Tooltip("Temporarily enables Rigidbody interpolation while this object is controlled.")]
-    [SerializeField] private bool smoothRigidbodyInterpolation = true;
     [Tooltip("Extra downward ray distance to keep the player attached when the platform moves down quickly.")]
     [SerializeField] private float carryHoverTolerance = 0.35f;
     [Tooltip("How long to keep carrying the player after contact flickers for one or two physics frames.")]
@@ -45,16 +45,22 @@ public class InteractableManipulator : MonoBehaviour
     [Tooltip("The scale the object returns to after snapping back.")]
     [SerializeField] private float snapBackScale = 1f;
 
+    [Header("Focus Pop Animation")]
+    [Tooltip("How much the object scales up beyond its current scale at the peak of the pop.")]
+    [SerializeField] private float popScaleAmount = 0.15f;
+    [Tooltip("Total duration of the pop animation in seconds.")]
+    [SerializeField] private float popDuration = 0.2f;
+
     public Transform originPoint;
 
     private bool _isSnappingBack = false;
+    private Coroutine _popCoroutine;
     private Rigidbody2D _rb;
     private Collider2D[] _movementColliders;
     private bool _wasFocused = false;
     private bool _wasCarryingPlayer = false;
     private float _carryUntilTime = 0f;
     private Vector2 _carryOffset;
-    private RigidbodyInterpolation2D _originalInterpolation;
 
     private readonly RaycastHit2D[] _carryRayHits = new RaycastHit2D[4];
     private readonly RaycastHit2D[] _movementCastHits = new RaycastHit2D[12];
@@ -65,9 +71,6 @@ public class InteractableManipulator : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _movementColliders = GetComponentsInChildren<Collider2D>(true);
-
-        if (_rb != null)
-            _originalInterpolation = _rb.interpolation;
     }
 
     private void OnValidate()
@@ -80,12 +83,11 @@ public class InteractableManipulator : MonoBehaviour
     public void OnFocused()
     {
         if (_rb == null) return;
-
-        if (smoothRigidbodyInterpolation)
-            _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-
         _rb.gravityScale = 0f;
         _rb.linearVelocity = Vector2.zero;
+
+        if (_popCoroutine != null) StopCoroutine(_popCoroutine);
+        _popCoroutine = StartCoroutine(PopAnimation());
     }
 
     public void OnFocusReleased()
@@ -93,7 +95,6 @@ public class InteractableManipulator : MonoBehaviour
         ClearCarryState();
 
         if (_rb == null) return;
-        _rb.interpolation = _originalInterpolation;
         _rb.gravityScale = 1f;
         _rb.linearVelocity = Vector2.zero;
     }
@@ -158,9 +159,43 @@ public class InteractableManipulator : MonoBehaviour
         bool isFocusedNow = IsControlled;
 
         if (isFocusedNow && !_wasFocused)
+        {
+            // Disable the trigger collider
             targetCollider.enabled = false;
+
+            // Ignore physics collisions between this object and all target object colliders
+            if (targetObjectColliders != null && _movementColliders != null)
+            {
+                foreach (Collider2D targetCol in targetObjectColliders)
+                {
+                    if (targetCol == null) continue;
+                    foreach (Collider2D myCol in _movementColliders)
+                    {
+                        if (myCol == null) continue;
+                        Physics2D.IgnoreCollision(myCol, targetCol, true);
+                    }
+                }
+            }
+        }
         else if (!isFocusedNow && _wasFocused)
+        {
+            // Re-enable the trigger collider
             targetCollider.enabled = true;
+
+            // Restore physics collisions between this object and all target object colliders
+            if (targetObjectColliders != null && _movementColliders != null)
+            {
+                foreach (Collider2D targetCol in targetObjectColliders)
+                {
+                    if (targetCol == null) continue;
+                    foreach (Collider2D myCol in _movementColliders)
+                    {
+                        if (myCol == null) continue;
+                        Physics2D.IgnoreCollision(myCol, targetCol, false);
+                    }
+                }
+            }
+        }
 
         _wasFocused = isFocusedNow;
     }
@@ -215,6 +250,39 @@ public class InteractableManipulator : MonoBehaviour
         instantSnap = false;
     }
 
+    private IEnumerator PopAnimation()
+    {
+        float baseScale = transform.localScale.x;
+        float peakScale = baseScale + popScaleAmount;
+        float halfDuration = popDuration * 0.5f;
+        float elapsed = 0f;
+
+        // Scale up to peak
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / halfDuration);
+            float s = Mathf.Lerp(baseScale, peakScale, t);
+            transform.localScale = new Vector3(s, s, s);
+            yield return null;
+        }
+
+        elapsed = 0f;
+
+        // Scale back down to base
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / halfDuration);
+            float s = Mathf.Lerp(peakScale, baseScale, t);
+            transform.localScale = new Vector3(s, s, s);
+            yield return null;
+        }
+
+        transform.localScale = new Vector3(baseScale, baseScale, baseScale);
+        _popCoroutine = null;
+    }
+
     private void MoveObjectTo(Vector3 targetPosition)
     {
         Vector3 currentPosition = GetObjectPosition();
@@ -267,9 +335,6 @@ public class InteractableManipulator : MonoBehaviour
 
         if (IsPlayerStandingOnThisObject(playerMovement))
         {
-            if (!_wasCarryingPlayer)
-                _carryOffset = playerMovement.player.position - (Vector2)GetObjectPosition();
-
             _wasCarryingPlayer = true;
             _carryUntilTime = Time.time + Mathf.Max(0f, carryStickTime);
             return playerMovement;
@@ -348,6 +413,9 @@ public class InteractableManipulator : MonoBehaviour
         if (ContainsCollider(_movementColliders, hitCollider)) return true;
         if (playerToCarry != null && ContainsCollider(playerToCarry.SolidColliders, hitCollider)) return true;
 
+        // Also ignore any collider that belongs to the target object while focused
+        if (IsControlled && ContainsCollider(targetObjectColliders, hitCollider)) return true;
+
         return false;
     }
 
@@ -363,8 +431,17 @@ public class InteractableManipulator : MonoBehaviour
 
     private void MoveStandingPlayer(NomiMovment playerMovement, Vector3 objectPosition)
     {
-        Vector2 targetPosition = (Vector2)objectPosition + _carryOffset;
-        playerMovement.MoveWithPlatform(targetPosition, Time.fixedDeltaTime);
+        // Lock player position to the platform in local space.
+        playerMovement.AttachToPlatform(transform);
+
+        // Flip the player's sprite to face the direction the stone is moving.
+        // The camera is on the stone when carrying, so the player's own input
+        // returns zero — we forward the stone's movement input directly instead.
+        if (moveAction != null)
+        {
+            float h = moveAction.action.ReadValue<Vector2>().x;
+            playerMovement.SetFacingFromPlatformInput(h);
+        }
     }
 
     private void ClearCarryState()
