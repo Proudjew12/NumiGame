@@ -9864,7 +9864,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 428.51917, y: 15.09917, z: -10}
+  m_LocalPosition: {x: 354.6433, y: 12.322323, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21860,9 +21860,12 @@ GameObject:
   m_Component:
   - component: {fileID: 630311307}
   - component: {fileID: 630311306}
-  m_Layer: 0
+  - component: {fileID: 630311310}
+  - component: {fileID: 630311309}
+  - component: {fileID: 630311308}
+  m_Layer: 13
   m_Name: Rope
-  m_TagString: Untagged
+  m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21941,6 +21944,231 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &630311308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630311305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec2c5f941be8aa24583a6be0d0c964e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteOutline
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineShader: {fileID: 4800000, guid: 128e987d567d4e2c824d754223b3f3b0, type: 3}
+  currentOutlineSize: 0
+--- !u!114 &630311309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630311305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46bf6b0d900a42a4bb486ebbb0c8908e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RopePullMechanic
+  spinInput: {fileID: 676692572}
+  ropeOutline: {fileID: 630311308}
+  ropeTransform: {fileID: 630311307}
+  handsGround: {fileID: 1788828462}
+  ropeCamera: {fileID: 0}
+  ropeTargetY: -5.16
+  handsTargetY: -5.16
+  totalDegreesRequired: 7200
+  moveSpeed: 5
+--- !u!60 &630311310
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630311305}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.855, y: 4.8725}
+    newSize: {x: 0.855, y: 4.8725}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: -0.1775, y: -2.3487499}
+      - {x: -0.16499999, y: -2.32375}
+      - {x: -0.14999999, y: -2.28375}
+      - {x: -0.1425, y: -2.24625}
+      - {x: -0.1425, y: -2.1387498}
+      - {x: -0.0975, y: -1.9437499}
+      - {x: -0.06, y: -1.80125}
+      - {x: -0.0525, y: -1.78125}
+      - {x: 0, y: -1.61375}
+      - {x: 0.015, y: -1.56125}
+      - {x: 0.022499999, y: -1.53125}
+      - {x: 0.04, y: -1.46625}
+      - {x: 0.0475, y: -1.4287499}
+      - {x: 0.0525, y: -1.37875}
+      - {x: 0.0625, y: -1.29125}
+      - {x: 0.06, y: -1.1637499}
+      - {x: 0.0525, y: -1.06125}
+      - {x: 0.044999998, y: -0.97875}
+      - {x: 0.037499998, y: -0.90125}
+      - {x: 0.03, y: -0.82124996}
+      - {x: 0.022499999, y: -0.74375}
+      - {x: 0.015, y: -0.65875}
+      - {x: 0.01, y: -0.60875}
+      - {x: 0.0075, y: -0.55875}
+      - {x: 0.0025, y: -0.49374998}
+      - {x: 0, y: -0.42125}
+      - {x: -0.0025, y: -0.40625}
+      - {x: -0.005, y: -0.40375}
+      - {x: -0.005, y: -0.13125}
+      - {x: -0.0025, y: -0.12875}
+      - {x: 0, y: -0.113749996}
+      - {x: 0.0025, y: -0.04625}
+      - {x: 0.0075, y: 0.0112499995}
+      - {x: 0.01, y: 0.08625}
+      - {x: 0.015, y: 0.09375}
+      - {x: 0.022499999, y: 0.15875}
+      - {x: 0.037499998, y: 0.26624998}
+      - {x: 0.06, y: 0.38875}
+      - {x: 0.089999996, y: 0.52375}
+      - {x: 0.12, y: 0.64125}
+      - {x: 0.1375, y: 0.69124997}
+      - {x: 0.16, y: 0.77125}
+      - {x: 0.21249999, y: 0.95374995}
+      - {x: 0.24, y: 1.07375}
+      - {x: 0.24749999, y: 1.1062499}
+      - {x: 0.2625, y: 1.18125}
+      - {x: 0.2775, y: 1.27375}
+      - {x: 0.285, y: 1.33625}
+      - {x: 0.2925, y: 1.43625}
+      - {x: 0.2925, y: 1.52375}
+      - {x: 0.29, y: 1.5337499}
+      - {x: 0.285, y: 1.63625}
+      - {x: 0.2775, y: 1.69875}
+      - {x: 0.26999998, y: 1.7512499}
+      - {x: 0.2575, y: 1.85375}
+      - {x: 0.24749999, y: 1.91125}
+      - {x: 0.24249999, y: 1.95875}
+      - {x: 0.24, y: 2.08375}
+      - {x: 0.24249999, y: 2.08625}
+      - {x: 0.24749999, y: 2.13375}
+      - {x: 0.255, y: 2.2012498}
+      - {x: 0.26999998, y: 2.2862499}
+      - {x: 0.285, y: 2.3487499}
+      - {x: 0.2925, y: 2.3887498}
+      - {x: 0.2925, y: 2.39625}
+      - {x: 0.2875, y: 2.40125}
+      - {x: 0.26749998, y: 2.4112499}
+      - {x: 0.24499999, y: 2.41375}
+      - {x: 0.175, y: 2.41375}
+      - {x: 0.1525, y: 2.40875}
+      - {x: 0.1425, y: 2.3987498}
+      - {x: 0.122499995, y: 2.30125}
+      - {x: 0.114999995, y: 2.26125}
+      - {x: 0.107499994, y: 2.21125}
+      - {x: 0.0975, y: 2.14625}
+      - {x: 0.0975, y: 1.96875}
+      - {x: 0.099999994, y: 1.93125}
+      - {x: 0.107499994, y: 1.86875}
+      - {x: 0.122499995, y: 1.76875}
+      - {x: 0.13499999, y: 1.68625}
+      - {x: 0.1425, y: 1.6112499}
+      - {x: 0.145, y: 1.54625}
+      - {x: 0.1475, y: 1.52125}
+      - {x: 0.1425, y: 1.39125}
+      - {x: 0.13, y: 1.28625}
+      - {x: 0.122499995, y: 1.2362499}
+      - {x: 0.099999994, y: 1.12125}
+      - {x: 0.082499996, y: 1.05875}
+      - {x: 0.055, y: 0.94874996}
+      - {x: 0.0325, y: 0.86875}
+      - {x: -0.005, y: 0.73625}
+      - {x: -0.0425, y: 0.59875}
+      - {x: -0.049999997, y: 0.56874996}
+      - {x: -0.065, y: 0.50624996}
+      - {x: -0.0875, y: 0.40375}
+      - {x: -0.0975, y: 0.36374998}
+      - {x: -0.12, y: 0.22874999}
+      - {x: -0.125, y: 0.17125}
+      - {x: -0.1325, y: 0.10375}
+      - {x: -0.13499999, y: 0.06875}
+      - {x: -0.14, y: 0.02125}
+      - {x: -0.1425, y: -0.091249995}
+      - {x: -0.1475, y: -0.10125}
+      - {x: -0.1475, y: -0.39374998}
+      - {x: -0.145, y: -0.40875}
+      - {x: -0.1425, y: -0.48125}
+      - {x: -0.1425, y: -0.53875}
+      - {x: -0.1375, y: -0.59625}
+      - {x: -0.1325, y: -0.63874996}
+      - {x: -0.125, y: -0.72375}
+      - {x: -0.1175, y: -0.80375}
+      - {x: -0.114999995, y: -0.81374997}
+      - {x: -0.11, y: -0.89625}
+      - {x: -0.1025, y: -0.97125}
+      - {x: -0.0975, y: -1.0437499}
+      - {x: -0.0925, y: -1.09375}
+      - {x: -0.0875, y: -1.16625}
+      - {x: -0.082499996, y: -1.26625}
+      - {x: -0.089999996, y: -1.28125}
+      - {x: -0.095, y: -1.3662499}
+      - {x: -0.1175, y: -1.4862499}
+      - {x: -0.14, y: -1.57125}
+      - {x: -0.17, y: -1.6687499}
+      - {x: -0.1925, y: -1.7362499}
+      - {x: -0.19999999, y: -1.76375}
+      - {x: -0.21499999, y: -1.81125}
+      - {x: -0.22999999, y: -1.8662499}
+      - {x: -0.24499999, y: -1.9287499}
+      - {x: -0.29, y: -2.12375}
+      - {x: -0.30249998, y: -2.15875}
+      - {x: -0.32999998, y: -2.18625}
+      - {x: -0.35, y: -2.21875}
+      - {x: -0.36499998, y: -2.25125}
+      - {x: -0.3725, y: -2.28875}
+      - {x: -0.3725, y: -2.32375}
+      - {x: -0.36749998, y: -2.36125}
+      - {x: -0.345, y: -2.38625}
+      - {x: -0.315, y: -2.3987498}
+      - {x: -0.2325, y: -2.3987498}
+      - {x: -0.225, y: -2.39625}
+      - {x: -0.2175, y: -2.39125}
+      - {x: -0.19, y: -2.36625}
+  m_UseDelaunayMesh: 1
 --- !u!1 &641428319
 GameObject:
   m_ObjectHideFlags: 0
@@ -22283,7 +22511,7 @@ Transform:
   m_GameObject: {fileID: 676692560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1179.5192, y: 9.84917, z: 0}
+  m_LocalPosition: {x: 1105.6433, y: 7.072323, z: 0}
   m_LocalScale: {x: 0.85, y: 0.85, z: 0.85}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -22484,7 +22712,7 @@ MonoBehaviour:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
-          m_FloatArgument: 0
+          m_FloatArgument: 720
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
@@ -40947,7 +41175,7 @@ Transform:
   m_GameObject: {fileID: 957081153}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 428.51917, y: 15.84917, z: -10}
+  m_LocalPosition: {x: 354.6433, y: 13.072323, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -41364,242 +41592,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!21 &984147524
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: WaterOrbMatirial (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
-  m_Shader: {fileID: 4800000, guid: 87ca8191b5227fc4eb531475c8b2eec4, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _AlphaTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailAlbedoMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailMask:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _DetailNormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _EmissionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _IllustrationTex:
-        m_Texture: {fileID: 2800000, guid: 2d97e94c3bb757f4a98163ac64aeb830, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _OcclusionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _ParallaxMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendModePreserveSpecular: 1
-    - _BlobNoise1: 3
-    - _BlobNoise1Amp: 0.045
-    - _BlobNoise2: 5
-    - _BlobNoise2Amp: 0.03
-    - _BlobRadius: 0.6
-    - _BumpScale: 1
-    - _ClearCoatMask: 0
-    - _ClearCoatSmoothness: 0
-    - _ColorMask: 15
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DetailAlbedoMapScale: 1
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _EnableExternalAlpha: 0
-    - _EnvironmentReflections: 1
-    - _FillAmount: 0
-    - _FoamThickness: 0.012
-    - _GlintIntensity: 0.18
-    - _GlossMapScale: 0
-    - _Glossiness: 0
-    - _GlossyReflections: 0
-    - _GlowIntensity: 1.2
-    - _GlowRadius: 0.18
-    - _IllustrationOffsetX: 0
-    - _IllustrationOffsetY: -0.05
-    - _IllustrationOpacity: 1
-    - _IllustrationRiseWithWater: 0
-    - _IllustrationScale: 3.75
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.005
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _RimWidth: 0.012
-    - _Smoothness: 0.5
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _StarBrightness: 0.75
-    - _StarCount: 14
-    - _StarTwinkleSpeed: 1.1
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _Surface: 0
-    - _WaveAmplitude: 0.04
-    - _WaveFrequency: 8
-    - _WaveFrequency2: 14
-    - _WaveSpeed: 1.2
-    - _WaveSpeed2: 0.85
-    - _WorkflowMode: 1
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BgColorInner: {r: 0.1, g: 0.09, b: 0.25, a: 1}
-    - _BgColorOuter: {r: 0.04, g: 0.04, b: 0.13, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Flip: {r: 1, g: 1, b: 1, a: 1}
-    - _FoamColor: {r: 0.87, g: 0.84, b: 1, a: 0.5}
-    - _GlowColor: {r: 0.47, g: 0.43, b: 0.9, a: 1}
-    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RimColor: {r: 0.74, g: 0.71, b: 1, a: 1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _WaterColorBot: {r: 0.27, g: 0.22, b: 0.67, a: 0.95}
-    - _WaterColorMid: {r: 0.47, g: 0.39, b: 0.86, a: 0.85}
-    - _WaterColorTop: {r: 0.62, g: 0.57, b: 0.94, a: 0.75}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &985639833
 GameObject:
   m_ObjectHideFlags: 0
@@ -67329,6 +67321,242 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1461856963}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &1544027577
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: WaterOrbMatirial (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+  m_Shader: {fileID: 4800000, guid: 87ca8191b5227fc4eb531475c8b2eec4, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _IllustrationTex:
+        m_Texture: {fileID: 2800000, guid: 2d97e94c3bb757f4a98163ac64aeb830, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
+    - _BlobNoise1: 3
+    - _BlobNoise1Amp: 0.045
+    - _BlobNoise2: 5
+    - _BlobNoise2Amp: 0.03
+    - _BlobRadius: 0.6
+    - _BumpScale: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
+    - _ColorMask: 15
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DetailAlbedoMapScale: 1
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _EnableExternalAlpha: 0
+    - _EnvironmentReflections: 1
+    - _FillAmount: 0
+    - _FoamThickness: 0.012
+    - _GlintIntensity: 0.18
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
+    - _GlowIntensity: 1.2
+    - _GlowRadius: 0.18
+    - _IllustrationOffsetX: 0
+    - _IllustrationOffsetY: -0.05
+    - _IllustrationOpacity: 1
+    - _IllustrationRiseWithWater: 0
+    - _IllustrationScale: 3.75
+    - _Metallic: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.005
+    - _QueueOffset: 0
+    - _ReceiveShadows: 1
+    - _RimWidth: 0.012
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _StarBrightness: 0.75
+    - _StarCount: 14
+    - _StarTwinkleSpeed: 1.1
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _Surface: 0
+    - _WaveAmplitude: 0.04
+    - _WaveFrequency: 8
+    - _WaveFrequency2: 14
+    - _WaveSpeed: 1.2
+    - _WaveSpeed2: 0.85
+    - _WorkflowMode: 1
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BgColorInner: {r: 0.1, g: 0.09, b: 0.25, a: 1}
+    - _BgColorOuter: {r: 0.04, g: 0.04, b: 0.13, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _FoamColor: {r: 0.87, g: 0.84, b: 1, a: 0.5}
+    - _GlowColor: {r: 0.47, g: 0.43, b: 0.9, a: 1}
+    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RimColor: {r: 0.74, g: 0.71, b: 1, a: 1}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _WaterColorBot: {r: 0.27, g: 0.22, b: 0.67, a: 0.95}
+    - _WaterColorMid: {r: 0.47, g: 0.39, b: 0.86, a: 0.85}
+    - _WaterColorTop: {r: 0.62, g: 0.57, b: 0.94, a: 0.75}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1548092160
 GameObject:
   m_ObjectHideFlags: 0
@@ -103094,7 +103322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
-  m_Material: {fileID: 984147524}
+  m_Material: {fileID: 1544027577}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
