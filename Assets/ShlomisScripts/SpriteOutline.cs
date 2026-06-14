@@ -7,15 +7,23 @@ public class SpriteOutline : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
     public float currentOutlineSize = 0f;
+    private bool _outlineLocked = false; // when true, SetInRange cannot turn outline back on
 
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        CreateOutline(0f); // hidden by default
+        CreateOutline(0f);
+    }
+
+    public void LockOutlineOff()
+    {
+        _outlineLocked = true;
+        CreateOutline(0f);
     }
 
     public void SetInRange(bool inRange)
     {
+        if (_outlineLocked) return; // ignore all future calls
         CreateOutline(inRange ? 0.1f : 0f);
     }
 
@@ -27,7 +35,7 @@ public class SpriteOutline : MonoBehaviour
             if (child.name == "Outline")
                 Destroy(child.gameObject);
 
-        if (size <= 0f) return; // no outline needed
+        if (size <= 0f) return;
 
         Vector2[] directions = {
             Vector2.up, Vector2.down,

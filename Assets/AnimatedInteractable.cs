@@ -149,15 +149,15 @@ public class AnimatedInteractable : MonoBehaviour
                 currentStep++;
                 currentTapCount = 0;
                 tapTimer        = 0f;
-
-                if (currentStep >= stones.Length)
-                {
-                    puzzleSolved    = true;
-                    idleTimerActive = false;
-                    if (puzzleCamera != null) puzzleCamera.Priority = 0;
-                    Debug.Log("Puzzle SOLVED!");
-                    return;
-                }
+if (currentStep >= stones.Length)
+{
+    puzzleSolved    = true;
+    idleTimerActive = false;
+    if (puzzleCamera != null) puzzleCamera.Priority = 0;
+    if (spriteOutline != null) spriteOutline.LockOutlineOff(); // lock outline off
+    Debug.Log("Puzzle SOLVED!");
+    return;
+}
 
                 idleTimer       = 0f;
                 idleTimerActive = true;

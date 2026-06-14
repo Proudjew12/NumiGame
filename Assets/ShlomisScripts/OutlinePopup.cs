@@ -17,6 +17,13 @@ public class OutlinePopup : MonoBehaviour
     public Vector3 popupOffset = new Vector3(0, 1.5f, 0);
     public float fadeSpeed = 5f;
 
+    [Header("Scale Animation")]
+    [Tooltip("Scale the popup up/down when showing/hiding.")]
+    public bool useScaleAnimation = true;
+    public Vector3 hiddenScale   = Vector3.zero;
+    public Vector3 visibleScale  = Vector3.one;
+    public float scaleSpeed = 5f;
+
     [Header("Sorting (Sprite mode only)")]
     public string sortingLayerName = "Default";
     public int sortingOrder = 0;
@@ -45,21 +52,23 @@ public class OutlinePopup : MonoBehaviour
             if (popupPrefab == null) return;
 
             popupInstance = Instantiate(popupPrefab, transform.position + popupOffset, Quaternion.identity);
-
-            // Start hidden — disable the whole object
             popupInstance.SetActive(false);
+
+            if (useScaleAnimation)
+                popupInstance.transform.localScale = hiddenScale;
         }
         else
         {
             if (popupSprite == null) return;
 
             popupInstance = new GameObject("OutlinePopup");
-            popupInstance.transform.position = transform.position + popupOffset;
+            popupInstance.transform.position   = transform.position + popupOffset;
+            popupInstance.transform.localScale = useScaleAnimation ? hiddenScale : visibleScale;
 
             popupRenderer = popupInstance.AddComponent<SpriteRenderer>();
-            popupRenderer.sprite = popupSprite;
+            popupRenderer.sprite           = popupSprite;
             popupRenderer.sortingLayerName = sortingLayerName;
-            popupRenderer.sortingOrder = sortingOrder;
+            popupRenderer.sortingOrder     = sortingOrder;
 
             Color c = popupRenderer.color;
             c.a = 0f;
@@ -86,18 +95,44 @@ public class OutlinePopup : MonoBehaviour
 
         if (usePrefab)
         {
-            // Prefab mode: just toggle active
-            popupInstance.SetActive(outlineActive);
+            if (useScaleAnimation)
+            {
+                // Keep the object active and drive scale so the animation plays
+                popupInstance.SetActive(true);
+
+                Vector3 targetScale = outlineActive ? visibleScale : hiddenScale;
+                popupInstance.transform.localScale = Vector3.Lerp(
+                    popupInstance.transform.localScale,
+                    targetScale,
+                    Time.deltaTime * scaleSpeed
+                );
+            }
+            else
+            {
+                // Original behaviour: simple toggle
+                popupInstance.SetActive(outlineActive);
+            }
         }
         else
         {
             if (popupRenderer == null) return;
 
-            // Sprite mode: fade alpha as before
+            // Fade alpha
             float targetAlpha = outlineActive ? 1f : 0f;
             Color c = popupRenderer.color;
             c.a = Mathf.Lerp(c.a, targetAlpha, Time.deltaTime * fadeSpeed);
             popupRenderer.color = c;
+
+            // Scale animation
+            if (useScaleAnimation)
+            {
+                Vector3 targetScale = outlineActive ? visibleScale : hiddenScale;
+                popupInstance.transform.localScale = Vector3.Lerp(
+                    popupInstance.transform.localScale,
+                    targetScale,
+                    Time.deltaTime * scaleSpeed
+                );
+            }
         }
     }
 
