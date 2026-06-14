@@ -9864,7 +9864,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 354.6433, y: 12.322323, z: -10}
+  m_LocalPosition: {x: 372.2339, y: 13.935902, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22511,7 +22511,7 @@ Transform:
   m_GameObject: {fileID: 676692560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1105.6433, y: 7.072323, z: 0}
+  m_LocalPosition: {x: 1123.2339, y: 8.685902, z: 0}
   m_LocalScale: {x: 0.85, y: 0.85, z: 0.85}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -41175,7 +41175,7 @@ Transform:
   m_GameObject: {fileID: 957081153}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 354.6433, y: 13.072323, z: -10}
+  m_LocalPosition: {x: 372.2339, y: 14.685902, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53376,8 +53376,8 @@ GameObject:
   - component: {fileID: 1290975907}
   - component: {fileID: 1290975906}
   - component: {fileID: 1290975905}
-  - component: {fileID: 1290975904}
   - component: {fileID: 1290975908}
+  - component: {fileID: 1290975909}
   m_Layer: 8
   m_Name: BellStone (11)
   m_TagString: Ground
@@ -53400,25 +53400,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1727433080}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1290975904
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1290975902}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47c16cbf64ac3a44caf7e2c72082c83d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShakingPlatform2D
-  timeBeforeFall: 1
-  shakeMagnitude: 0.05
-  shakeSpeed: 50
-  resetDelay: 3
-  returnSpeed: 3
-  rotationReturnSpeed: 90
-  playerOnTop: 0
 --- !u!68 &1290975905
 EdgeCollider2D:
   m_ObjectHideFlags: 0
@@ -55072,7 +55053,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1290975902}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -55091,6 +55072,22 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &1290975909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1290975902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89344abfea85f544d87bc69474308f21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExplodingObject
+  explosionRadius: 5
+  explosionForce: 700
+  explosionVFX: {fileID: 0}
+  risingObject: {fileID: 1724359732}
 --- !u!1 &1297682809
 GameObject:
   m_ObjectHideFlags: 0
@@ -67321,7 +67318,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1461856963}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1544027577
+--- !u!21 &1541678655
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -67395,6 +67392,7 @@ Material:
     (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
     (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
     (Instance) (Instance) (Instance) (Instance) (Instance) (Instance) (Instance)
+    (Instance)
   m_Shader: {fileID: 4800000, guid: 87ca8191b5227fc4eb531475c8b2eec4, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -77829,6 +77827,7 @@ GameObject:
   - component: {fileID: 1724359734}
   - component: {fileID: 1724359733}
   - component: {fileID: 1724359735}
+  - component: {fileID: 1724359736}
   m_Layer: 8
   m_Name: Stone-Hands-Type-1
   m_TagString: Ground
@@ -77960,6 +77959,20 @@ EdgeCollider2D:
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0
   m_UseAdjacentEndPoint: 0
+--- !u!114 &1724359736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724359732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c5819e3b842004bad5368924c4ee48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RisingObject
+  riseSpeed: 3
+  playerTag: Player
 --- !u!1 &1727433079
 GameObject:
   m_ObjectHideFlags: 0
@@ -103322,7 +103335,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
-  m_Material: {fileID: 1544027577}
+  m_Material: {fileID: 1541678655}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
