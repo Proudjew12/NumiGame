@@ -11,6 +11,8 @@ public class RisingObject : MonoBehaviour
     private bool isRising = false;
     private bool hasReachedPlayer = false;
 
+    public RisingFlashVFX flashVFX;
+
     public void StartRising()
     {
         isRising = true;
@@ -18,7 +20,7 @@ public class RisingObject : MonoBehaviour
 
     private void Update()
     {
-        if (!isRising || hasReachedPlayer) return;
+        if (!isRising) return;
 
         transform.Translate(Vector2.up * riseSpeed * Time.deltaTime);
     }
@@ -26,22 +28,24 @@ public class RisingObject : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag(playerTag))
-            StopRising(collision.gameObject);
+            OnReachPlayer();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag(playerTag))
-            StopRising(other.gameObject);
+            OnReachPlayer();
     }
 
-    private void StopRising(GameObject player)
+    private void OnReachPlayer()
     {
         if (hasReachedPlayer) return;
         hasReachedPlayer = true;
-        isRising = false;
 
         Debug.Log($"{gameObject.name} reached the player!");
+
+        if (flashVFX != null)
+            flashVFX.StartRising();
 
         // Add your logic here: deal damage, trigger animation, etc.
     }
