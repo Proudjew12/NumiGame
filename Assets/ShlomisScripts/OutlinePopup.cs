@@ -15,6 +15,8 @@ public class OutlinePopup : MonoBehaviour
 
     [Header("Shared Settings")]
     public Vector3 popupOffset = new Vector3(0, 1.5f, 0);
+    [Tooltip("When enabled, the popup offset scales with the object's world scale.")]
+    public bool scaleOffsetWithObject = false;
     public float fadeSpeed = 5f;
 
     [Header("Scale Animation")]
@@ -89,7 +91,11 @@ public class OutlinePopup : MonoBehaviour
     {
         if (popupInstance == null) return;
 
-        popupInstance.transform.position = transform.position + popupOffset;
+        // Optionally scale the offset with the object's world scale
+        Vector3 scaledOffset = scaleOffsetWithObject
+            ? Vector3.Scale(popupOffset, transform.lossyScale)
+            : popupOffset;
+        popupInstance.transform.position = transform.position + scaledOffset;
 
         bool outlineActive = IsAnyOutlineActive();
 
